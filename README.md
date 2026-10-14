@@ -197,3 +197,59 @@ service isc-dhcp-server restart
 
 ---
 
+## Soal 3 — DHCP Relay `jichi`
+
+**Tujuan.** Permintaan alamat dari Divisi A dan Divisi B tidak dapat menyeberangi subnet secara langsung. `jichi` dikonfigurasi sebagai **DHCP Relay** menuju `tengen` (`10.69.4.10`), memakai `eth2` untuk Network 2 dan `eth3` untuk Network 3. Client dari kedua subnet harus berhasil memperoleh lease melalui relay.
+
+**Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3"`, lalu restart service. Disimpan sebagai script `/root/03-dhcp-relay.sh`:
+
+```sh
+cat /root/03-dhcp-relay.sh
+```
+
+Isi `/etc/default/isc-dhcp-relay`:
+
+```sh
+cat /etc/default/isc-dhcp-relay
+```
+
+![](./Attachments/image-15.webp)
+> **[Screenshot: `/etc/default/isc-dhcp-relay` pada `jichi`]**
+
+Proses `dhcrelay` aktif pada `eth2` & `eth3`:
+
+```sh
+ps -ef | grep dhcrelay
+```
+
+![](./Attachments/image-16.webp)
+> **[Screenshot: proses `dhcrelay` berjalan]**
+
+Bukti relay berjalan (client N2 mengirim DISCOVER):
+
+```sh
+tcpdump -i eth2 -n port 67 or port 68
+```
+
+![](./Attachments/image-17.webp)
+> **[Screenshot: `tcpdump` pada `jichi` (eth2) — `DHCPDISCOVER` dari client Network 2]**
+
+Client Network 2 tidak memperoleh lease karena pool DHCP belum dikonfigurasi (akan diisi pada Soal 4–5). Bukti pada client N2 dan N3 saat ini: 
+
+N2:
+![](./Attachments/image-20.webp)
+
+N3:
+![](./Attachments/image-21.webp)
+
+**Bukti relay berhasil meneruskan ke server DHCP (`10.69.4.10`)**
+
+```sh
+tcpdump -i eth0 -n port 67 -vv
+```
+![]()
+> **[Screenshot: `tcpdump` pada `tengen` (eth0) — `DHCPDISCOVER` dari subnet N2/N3 dengan `giaddr` = `10.69.2.1` (N2) dan `10.69.3.1` (N3)]**
+
+Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi` (`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan, dhcpd tidak mengirim `DHCPOFFER`. Oleh karena itu, dapat disimpulkan bahwa **relay telah berjalan sesuai konfigurasi** — hanya `pool` untuk N2 dan N3 yang belum ditambahkan (akan dilakukan pada Soal 4–5).
+
+---
