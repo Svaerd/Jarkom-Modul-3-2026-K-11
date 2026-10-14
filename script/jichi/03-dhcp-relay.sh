@@ -25,10 +25,12 @@ fi
 
 DEBIAN_FRONTEND=noninteractive apt-get install -y isc-dhcp-relay
 
-# relay hanya di interface client N2 & N3, server = tengen
+# eth2/eth3 = sisi client; eth4 = sisi server (tengen 10.69.4.10).
+# dhcrelay hanya memproses interface yang didaftarkan, jadi eth4 wajib ada
+# agar balasan (DHCPOFFER) dari server tidak dibuang.
 cat > /etc/default/isc-dhcp-relay <<'EOF'
 SERVERS="10.69.4.10"
-INTERFACES="eth2 eth3"
+INTERFACES="eth2 eth3 eth4"
 OPTIONS=""
 EOF
 

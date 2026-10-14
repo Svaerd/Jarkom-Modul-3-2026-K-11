@@ -88,6 +88,7 @@ iptables -t nat -L POSTROUTING -v -n
 ```sh
 ping -c3 192.168.122.1
 ```
+
 ![](./Attachments/image-6.webp)
 
 ### 1.4 Verifikasi IPv4 Forwarding
@@ -168,6 +169,7 @@ Isi `/etc/dhcp/dhcpd.conf`:
 ```sh
 cat /etc/dhcp/dhcpd.conf
 ```
+
 ![](./Attachments/image-11.webp)
 > **[Screenshot: `/etc/dhcp/dhcpd.conf` pada `tengen`]**
 
@@ -176,6 +178,7 @@ Validasi konfigurasi:
 ```sh
 dhcpd -t -cf /etc/dhcp/dhcpd.conf
 ```
+
 ![](./Attachments/image-12.webp)
 > **[Screenshot: output `dhcpd -t` tanpa error]**
 
@@ -192,6 +195,7 @@ Pesan startup dhcpd (termasuk bila ada “No subnet declaration”) tak masuk sy
 ```sh
 service isc-dhcp-server restart
 ```
+
 ![](./Attachments/image-14.webp)
 > **[Screenshot: output restart tanpa “No subnet declaration”]**
 
@@ -201,7 +205,7 @@ service isc-dhcp-server restart
 
 **Tujuan.** Permintaan alamat dari Divisi A dan Divisi B tidak dapat menyeberangi subnet secara langsung. `jichi` dikonfigurasi sebagai **DHCP Relay** menuju `tengen` (`10.69.4.10`), memakai `eth2` untuk Network 2 dan `eth3` untuk Network 3. Client dari kedua subnet harus berhasil memperoleh lease melalui relay.
 
-**Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3"`, lalu restart service. Disimpan sebagai script `/root/03-dhcp-relay.sh`:
+**Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3 eth4"` (`eth4` = sisi server `tengen`, tanpa ini balasan DHCP tak kembali), lalu restart service. Disimpan sebagai script `/root/03-dhcp-relay.sh`:
 
 ```sh
 cat /root/03-dhcp-relay.sh
@@ -216,7 +220,7 @@ cat /etc/default/isc-dhcp-relay
 ![](./Attachments/image-15.webp)
 > **[Screenshot: `/etc/default/isc-dhcp-relay` pada `jichi`]**
 
-Proses `dhcrelay` aktif pada `eth2` & `eth3`:
+Proses `dhcrelay` aktif pada `eth2`, `eth3`, & `eth4`:
 
 ```sh
 ps -ef | grep dhcrelay
@@ -253,3 +257,208 @@ tcpdump -i eth0 -n port 67 -vv
 Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi` (`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan, dhcpd tidak mengirim `DHCPOFFER`. Oleh karena itu, dapat disimpulkan bahwa **relay telah berjalan sesuai konfigurasi** — hanya `pool` untuk N2 dan N3 yang belum ditambahkan (akan dilakukan pada Soal 4–5).
 
 ---
+
+## Soal 4 — DHCP Pool & Class Network 2
+
+**Tujuan.** Membagi pool N2: Pool 1 (`10.69.2.10–10.69.2.35`) untuk `itadori`, `fushiguro`; Pool 2 (`10.69.2.70–10.69.2.95`) untuk `zenin`, `okkotsu`. Rentang `10.69.2.36–10.69.2.69` dilarang. Pisahkan menggunakan **DHCP class** berdasarkan MAC.
+
+Script: `/root/04-dhcp-n2.sh` (disimpan di `script/tengen/04-dhcp-n2.sh`).
+
+Konfigurasi `/etc/dhcp/dhcpd.conf` (bagian N2):
+
+```sh
+cat /etc/dhcp/dhcpd.conf
+```
+
+![](./Attachments/image-22.webp)
+> **[Screenshot: konfigurasi pool & class N2 pada `tengen`]**
+
+Validasi:
+
+```sh
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+service isc-dhcp-server restart
+service isc-dhcp-server status
+```
+
+![](./Attachments/image-23.webp)
+> **[Screenshot: validasi + status `isc-dhcp-server` setelah Soal 4]**
+
+Verifikasi client N2 memperoleh lease sesuai pool:
+
+```sh
+# itadori & fushiguro -> 10.69.2.10–.35; zenin & okkotsu -> 10.69.2.70–.95
+ip -br addr
+```
+
+`itadori`
+![](./Attachments/image-24.webp)
+
+`fushiguro`
+![](./Attachments/image-25.webp)
+
+`zenin`
+![](./Attachments/image-26.webp)
+
+`okkotsu`
+![](./Attachments/image-27.webp)
+
+> **[Screenshot: `ip -br addr` client N2]**
+
+> **Catatan (perbaikan).** Nilai `subclass` wajib diawali `1:` (tipe hardware Ethernet). Client mengirim DHCP **Client-ID** `ether 02:42:...`, yaitu byte `01:02:42:...`, jadi penulisannya `subclass "pool1-n2" 1:02:42:47:5c:e2:00;`. Tanpa prefix `1:`, kelas tak cocok (`pick-first-value` mengembalikan Client-ID 7-byte), `dhcpd -d` mencatat `network 10.69.2.0/24: no free leases`, dan client tak menerima lease.
+
+---
+
+
+**Tujuan.** N3: `ino`, `kusakabe` short lease **1800s** (pool `.3.10–.3.89`); `miwa` long lease **43200s** (pool `.3.100–.3.199`). Atur `default-lease-time`/`max-lease-time` per kelas. Tambah DNS `10.69.1.2,10.69.1.3` + `domain-search jujutsu.K11.com`.
+
+Script: `/root/05-dhcp-n3.sh` (`script/tengen/05-dhcp-n3.sh`).
+
+Konfigurasi N3 di `/etc/dhcp/dhcpd.conf`:
+
+```sh
+cat /etc/dhcp/dhcpd.conf
+```
+![]()
+> **[Screenshot: konfigurasi N3 (short/long + domain-search) pada `tengen`]**
+
+Verifikasi lease time (contoh):
+
+```sh
+cat /var/lib/dhcp/dhcpd.leases | grep -A 20 -B 5 'ino\|kusakabe\|miwa'
+```
+![]()
+> **[Screenshot: `dhcpd.leases` menunjukkan `lease-time` 1800 / 43200]**
+
+---
+
+## Soal 6 — Static Lease Kugisaki `.3.99`
+
+**Tujuan.** `kugisaki` static lease berdasarkan MAC → `10.69.3.99` (di luar seluruh pool).
+
+Bagian `host kugisaki { hardware ethernet ...; fixed-address 10.69.3.99; }` sudah disertakan di script Soal 5.
+
+Verifikasi:
+
+```sh
+cat /etc/dhcp/dhcpd.conf | grep -A 10 'host kugisaki'
+service isc-dhcp-server restart; dhcpd -t
+```
+![]()
+> **[Screenshot: konfigurasi static lease `kugisaki` + validasi]**
+
+Cek lease di client `kugisaki`:
+
+```sh
+ip -br addr
+```
+![]()
+> **[Screenshot: `ip -br addr` `kugisaki` menunjukkan `10.69.3.99/24`]**
+
+Cek di `/var/lib/dhcp/dhcpd.leases`:
+
+```sh
+cat /var/lib/dhcp/dhcpd.leases | grep -B 5 -A 15 '02:42:69:c1:4e'
+```
+![]()
+> **[Screenshot: `dhcpd.leases` menandakan fixed address untuk MAC kugisaki]**
+
+---
+
+## Soal 7 — Verifikasi Konfigurasi Per-Client
+
+**Tujuan.** Pastikan setiap client N2–N3 menerima: mask `/24`, gateway & broadcast benar, DNS `10.69.1.2,10.69.1.3`, domain-search sesuai. Cocokkan lease dengan `/var/lib/dhcp/dhcpd.leases` di `tengen`. Tidak ada tabrakan atau IP di luar kebijakan pool.
+
+Verifikasi routing & info (contoh untuk beberapa client):
+
+```sh
+for h in itadori fushiguro zenin okkotsu ino kusakabe miwa kugisaki; do
+  echo "=== $h ==="; ssh -o StrictHostKeyChecking=no $h 'ip -br addr; ip route; cat /etc/resolv.conf'
+done 2>/dev/null
+```
+![]()
+> **[Screenshot: snapshot `ip addr`, `ip route`, `resolv.conf` seluruh client Divisi A & B]**
+
+Cross-check dengan leases:
+
+```sh
+cat /var/lib/dhcp/dhcpd.leases
+```
+![]()
+> **[Screenshot: keseluruhan lease aktif di `tengen`]**
+
+---
+
+## Soal 8 — Packet Capture DORA + giaddr
+
+**Tujuan.** Buktikan urutan **DHCPDISCOVER → DHCPOFFER → DHCPREQUEST → DHCPACK** saat client minta lease baru. Tunjukkan `giaddr` sesuai interface `jichi` dari subnet client.
+
+Re-packet capture saat renew:
+
+```sh
+# jichi (sisi client ke relay)
+tcpdump -i eth2 -n port 67 or port 68 -vv
+# atau di tengen (sisi relay ke server)
+tcpdump -i eth0 -n port 67 -vv
+```
+![]()
+> **[Screenshot: tcpdump menunjukkan urutan DORA lengkap, field `giaddr` = `10.69.2.1`/`10.69.3.1`]**
+
+Identifikasi: server IP (`10.69.4.10`), IP yang diberikan (sesuai pool/reservasi), lease time, `giaddr`.
+
+---
+
+## Soal 9 — Gangguan Relay
+
+**Tujuan.** Hentikan DHCP Relay di `jichi` → client gagal lease. Hidupkan kembali → lease benar.
+
+Lakukan pada `jichi`:
+```sh
+service isc-dhcp-relay stop
+```
+
+Paksa renew client (contoh Network 2):
+```sh
+# di client (alpinet) bisa pakai udhcpc -n -q atau restart interface
+# atau: dhclient -r eth0; dhclient eth0
+```
+![]()
+> **[Screenshot: gagal memperoleh lease saat relay dihentikan]**
+
+Hidupkan relay:
+```sh
+service isc-dhcp-relay start
+```
+Ulangi renew → lease kembali normal:
+![]()
+> **[Screenshot: berhasil memperoleh lease kembali setelah relay dihidupkan]**
+
+---
+
+## Soal 10 — Autostart + Restart Node
+
+**Tujuan.** Autostart DHCP Server (`tengen`) dan DHCP Relay (`jichi`); restart kedua node; verifikasi semua kebijakan tetap berlaku.
+
+Cek autostart:
+```sh
+# tengen
+systemctl is-enabled isc-dhcp-server 2>/dev/null; update-rc.d -n isc-dhcp-server defaults 2>/dev/null
+# jichi
+systemctl is-enabled isc-dhcp-relay 2>/dev/null; update-rc.d -n isc-dhcp-relay defaults 2>/dev/null
+```
+![]()
+> **[Screenshot: status autostart DHCP server & relay]**
+
+Restart node (GNS3/CLI). Setelah restart, verifikasi:
+```sh
+service isc-dhcp-server status; service isc-dhcp-relay status
+```
+![]()
+> **[Screenshot: layanan aktif setelah restart]**
+
+Verifikasi lease client (pool1/pool2, short/long, fixed .3.99), IP/gateway/DNS/domain-search:
+![]()
+> **[Screenshot: verifikasi akhir Soal 10]**
+
+> **Catatan (persistensi antar-restart).** Setiap node menjalankan `/root/<node>.sh` saat boot melalui baris `up bash /root/<node>.sh` di `/etc/network/interfaces` — `tengen.sh` menjalankan `02`+`04`+`05`, `jichi.sh` menjalankan `01`+`03`. File `/root` tersimpan pada volume node sehingga konfigurasi DHCP otomatis diterapkan ulang setiap restart. Helper `push_configs.py` (root repo) men-deploy ulang script `/root` dan config `/etc` via console node bila perlu.
+
