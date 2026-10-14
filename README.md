@@ -153,3 +153,47 @@ ip -br addr
 
 ---
 
+## Soal 2 — DHCP Server `tengen`
+
+**Tujuan.** `tengen` (Data Center, `10.69.4.10`) menjadi DHCP server. Network 4 dideklarasikan sebagai **subnet lokal tanpa pool dinamis**, sedangkan scope untuk **Network 2** dan **Network 3** disiapkan agar permintaan dari kedua subnet dapat dilayani. Service harus aktif tanpa error **“No subnet declaration”**.
+
+**Langkah.** Install `isc-dhcp-server`, set `INTERFACESv4="eth0"`, tulis `/etc/dhcp/dhcpd.conf` berisi tiga deklarasi `subnet` (N4 lokal, N2 dan N3 untuk relay), lalu validasi dan restart service. Disimpan sebagai script `/root/02-dhcp-server.sh`:
+
+```sh
+cat /root/02-dhcp-server.sh
+```
+
+Isi `/etc/dhcp/dhcpd.conf`:
+
+```sh
+cat /etc/dhcp/dhcpd.conf
+```
+![](./Attachments/image-11.webp)
+> **[Screenshot: `/etc/dhcp/dhcpd.conf` pada `tengen`]**
+
+Validasi konfigurasi:
+
+```sh
+dhcpd -t -cf /etc/dhcp/dhcpd.conf
+```
+![](./Attachments/image-12.webp)
+> **[Screenshot: output `dhcpd -t` tanpa error]**
+
+Status service aktif:
+
+```sh
+service isc-dhcp-server status
+```
+![](./Attachments/image-13.webp)
+> **[Screenshot: `isc-dhcp-server` aktif]**
+
+Pesan startup dhcpd (termasuk bila ada “No subnet declaration”) tak masuk syslog karena image debinet tanpa syslog daemon — tampil di console saat restart:
+
+```sh
+service isc-dhcp-server restart
+```
+![](./Attachments/image-14.webp)
+> **[Screenshot: output restart tanpa “No subnet declaration”]**
+
+---
+
