@@ -320,7 +320,8 @@ Konfigurasi N3 di `/etc/dhcp/dhcpd.conf`:
 ```sh
 cat /etc/dhcp/dhcpd.conf
 ```
-![]()
+
+![](./Attachments/image-28.webp)
 > **[Screenshot: konfigurasi N3 (short/long + domain-search) pada `tengen`]**
 
 Verifikasi lease time (contoh):
@@ -330,6 +331,8 @@ cat /var/lib/dhcp/dhcpd.leases | grep -A 20 -B 5 'ino\|kusakabe\|miwa'
 ```
 ![]()
 > **[Screenshot: `dhcpd.leases` menunjukkan `lease-time` 1800 / 43200]**
+![](./Attachments/image-29.webp)
+> **[Screenshot: `dhcpd.leases` menunjukkan selisih `starts` ke `ends` 1800s / 43200s]**
 
 ---
 
