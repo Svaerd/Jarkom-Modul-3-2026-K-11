@@ -26,7 +26,7 @@ echo "=============================================="
 echo " Identitas client"
 echo "=============================================="
 echo "hostname : $(hostname)"
-echo "IP client: $(ip -4 -br addr show eth0 2>/dev/null | awk '{print $3}')"
+echo "IP client: $(ip -4 addr show dev eth0 2>/dev/null | awk '/inet / {print $2; exit}')"
 echo "resolver :"
 cat /etc/resolv.conf
 ip route
