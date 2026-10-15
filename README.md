@@ -1,16 +1,17 @@
 # Jarkom-Modul-3-2026-K-11
 
-Laporan Praktikum Modul 3 — Komunikasi Data & Jaringan Komputer 2026
-**Curtain Protocol: Shibuya Incident — Pemulihan Jaringan dan Layanan Jujutsu High**
+Laporan Praktikum Modul 3: Komunikasi Data & Jaringan Komputer 2026
+**Curtain Protocol: Shibuya Incident, Pemulihan Jaringan dan Layanan Jujutsu High**
 
 Anggota Kelompok K-11:
+- Husam Danish (5027251060) - 1-10
+- Hasheemi Rafsanjani (5027251015) - 11-20
 
-- Hasheemi Rafsanjani (5027251015)
-- Husam Danish (5027251060)
+![](./Attachments/image-38.webp)
 
-Konvensi: prefix jaringan internal `10.69.x.x`, netmask `/24`, domain `jujutsu.K11.com`. Setiap blok perintah diberi keterangan **dijalankan di `<node>`** — node tempat perintah itu dieksekusi.
+Konvensi: prefix jaringan internal `10.69.x.x`, netmask `/24`, domain `jujutsu.K11.com`. Setiap blok perintah diberi keterangan **dijalankan di `<node>`**, node tempat perintah itu dieksekusi.
 
-## Soal 1 — Konektivitas Dasar dan Routing `jichi`
+## Soal 1: Konektivitas Dasar dan Routing `jichi`
 
 **Tujuan.** Memulihkan konektivitas antar-zona. `jichi` berperan sebagai router utama: antarmuka `eth0` memperoleh WAN dari NAT, sedangkan `eth1`–`eth4` menjadi gateway **Network 1–4**. IPv4 forwarding dan source NAT (masquerade) diaktifkan, lalu setiap host infrastruktur diberi IP statis sesuai rancangan.
 
@@ -26,7 +27,7 @@ Konvensi: prefix jaringan internal `10.69.x.x`, netmask `/24`, domain `jujutsu.K
 
 ### 1.1 Konfigurasi Interface `jichi`
 
-Konfigurasi `/etc/network/interfaces` pada `jichi` — **dijalankan di `jichi`**:
+Konfigurasi `/etc/network/interfaces` pada `jichi`, **dijalankan di `jichi`**:
 
 ```sh
 cat /etc/network/interfaces
@@ -54,7 +55,7 @@ done
 ....
 ```
 
-Efek yang dihasilkan pada `jichi` — **dijalankan di `jichi`** (perhatikan aturan balik dibuat untuk **setiap** `eth1`–`eth4`, bukan hanya `eth1`):
+Efek yang dihasilkan pada `jichi`, **dijalankan di `jichi`** (perhatikan aturan balik dibuat untuk **setiap** `eth1`–`eth4`, bukan hanya `eth1`):
 
 ```sh
 sysctl -w net.ipv4.ip_forward=1
@@ -72,14 +73,14 @@ iptables -A FORWARD -i eth0 -o eth4 -m state --state ESTABLISHED,RELATED -j ACCE
 Hasil `ip addr show` pada `jichi` (semua interface naik dengan alamat benar):
 ![|500](./Attachments/image-1.webp)
 
-IPv4 forwarding aktif — **dijalankan di `jichi`**:
+IPv4 forwarding aktif, **dijalankan di `jichi`**:
 ```sh
 cat /proc/sys/net/ipv4/ip_forward
 ```
 
 ![ip_forward = 1](./Attachments/image-2.webp)
 
-Aturan masquerade pada tabel NAT — **dijalankan di `jichi`**:
+Aturan masquerade pada tabel NAT, **dijalankan di `jichi`**:
 ```sh
 iptables -t nat -L POSTROUTING -v -n
 ```
@@ -88,7 +89,7 @@ iptables -t nat -L POSTROUTING -v -n
 
 ### 1.3 Verifikasi Gateway (`jichi` → NAT)
 
-`jichi` dapat menjangkau gateway NAT `192.168.122.1` — **dijalankan di `jichi`**:
+`jichi` dapat menjangkau gateway NAT `192.168.122.1`, **dijalankan di `jichi`**:
 ```sh
 ping -c3 192.168.122.1
 ```
@@ -97,19 +98,19 @@ ping -c3 192.168.122.1
 
 ### 1.4 Verifikasi IPv4 Forwarding
 
-Forwarding diuji dari host infrastruktur menuju gateway network-nya. Contoh pada `tengen` (Network 4) — **dijalankan di `tengen`**:
+Forwarding diuji dari host infrastruktur menuju gateway network-nya. Contoh pada `tengen` (Network 4), **dijalankan di `tengen`**:
 ```sh
 ping -c3 10.69.4.1
 ```
 
-Dan dari host klien/infrastruktur melalui masquerade `jichi` — contoh `tengen` (Network 4), **dijalankan di `tengen`**:
+Dan dari host klien/infrastruktur melalui masquerade `jichi`, contoh `tengen` (Network 4), **dijalankan di `tengen`**:
 
 ```sh
 ping -c3 1.1.1.1
 ```
 ![ping gateway dan cloudflare dari tengen](./Attachments/image-4.webp)
 
-Pada `utahime` (Network 1) — **dijalankan di `utahime`**:
+Pada `utahime` (Network 1), **dijalankan di `utahime`**:
 
 ```sh
 ping -c3 10.69.1.1
@@ -124,7 +125,7 @@ ping -c3 1.1.1.1
 
 ### 1.5 Verifikasi Akses Eksternal (Masquerading)
 
-Akses eksternal dibuktikan dari `jichi` sendiri — **dijalankan di `jichi`**:
+Akses eksternal dibuktikan dari `jichi` sendiri, **dijalankan di `jichi`**:
 ```sh
 ping -c3 192.168.122.1
 ping -c3 8.8.8.8
@@ -150,7 +151,9 @@ Selain `jichi`, host infrastruktur diberi IP statis. Disimpan sebagai script di 
 | 4 | `inumaki` (DB slave) | `10.69.4.9/24` | `10.69.4.1` |
 | 4 | `tengen` (DHCP server) | `10.69.4.10/24` | `10.69.4.1` |
 
-Contoh bukti IP statis pada host Network 1 (`utahime`) dan host Network 4 (`tengen`) — **dijalankan di `utahime` dan `tengen`**:
+Contoh bukti IP statis pada host Network 1 (`utahime`) dan host Network 4 (`tengen`), **dijalankan di `utahime` dan `tengen`**:
+
+> **Catatan.** Script `common/01-static-ip.sh` juga menambahkan baris hook `up bash /root/tengen.sh` pada `/etc/network/interfaces` milik `tengen` — prasyarat autostart DHCP server (Soal 10).
 
 ```sh
 ip -br addr
@@ -164,7 +167,7 @@ ip -br addr
 
 ---
 
-## Soal 2 — DHCP Server `tengen`
+## Soal 2: DHCP Server `tengen`
 
 **Tujuan.** `tengen` (Data Center, `10.69.4.10`) menjadi DHCP server. Network 4 dideklarasikan sebagai **subnet lokal tanpa pool dinamis**, sedangkan scope untuk **Network 2** dan **Network 3** disiapkan agar permintaan dari kedua subnet dapat dilayani. Service harus aktif tanpa error **“No subnet declaration”**.
 
@@ -176,7 +179,7 @@ ip -br addr
 cat /root/02-dhcp-server.sh
 ```
 
-Isi `/etc/dhcp/dhcpd.conf` — **dijalankan di `tengen`**:
+Isi `/etc/dhcp/dhcpd.conf`, **dijalankan di `tengen`**:
 
 ```sh
 cat /etc/dhcp/dhcpd.conf
@@ -192,8 +195,9 @@ cat /etc/dhcp/dhcpd.conf
 cat /root/03-dhcp-relay.sh
 ```
 
-Isi `/etc/default/isc-dhcp-relay` — **dijalankan di `jichi`**:
+![](./Attachments/image-33.webp)
 
+Isi `/etc/default/isc-dhcp-relay`, **dijalankan di `jichi`**:
 ```sh
 cat /etc/default/isc-dhcp-relay
 ```
@@ -201,7 +205,7 @@ cat /etc/default/isc-dhcp-relay
 ![](./Attachments/image-15.webp)
 > **[Screenshot: `/etc/default/isc-dhcp-relay` pada `jichi`]**
 
-Proses `dhcrelay` aktif pada `eth2`, `eth3`, & `eth4` — **dijalankan di `jichi`**:
+Proses `dhcrelay` aktif pada `eth2`, `eth3`, & `eth4`, **dijalankan di `jichi`**:
 
 ```sh
 ps -ef | grep dhcrelay
@@ -210,14 +214,14 @@ ps -ef | grep dhcrelay
 ![](./Attachments/image-16.webp)
 > **[Screenshot: proses `dhcrelay` berjalan]**
 
-Bukti relay berjalan (client N2 mengirim DISCOVER) — **dijalankan di `jichi`**:
+Bukti relay berjalan (client N2 mengirim DISCOVER), **dijalankan di `jichi`**:
 
 ```sh
 tcpdump -i eth2 -n port 67 or port 68
 ```
 
 ![](./Attachments/image-17.webp)
-> **[Screenshot: `tcpdump` pada `jichi` (eth2) — `DHCPDISCOVER` dari client Network 2]**
+> **[Screenshot: `tcpdump` pada `jichi` (eth2), `DHCPDISCOVER` dari client Network 2]**
 
 Client Network 2 tidak memperoleh lease karena pool DHCP belum dikonfigurasi (akan diisi pada Soal 4–5). Bukti pada klien Divisi A (N2) dan Divisi B (N3) saat ini:
 
@@ -227,27 +231,31 @@ Klien N2 (**dijalankan di klien N2, mis. `itadori`**):
 Klien N3 (**dijalankan di klien N3, mis. `ino`**):
 ![](./Attachments/image-21.webp)
 
-**Bukti relay berhasil meneruskan ke server DHCP (`10.69.4.10`) — dijalankan di `tengen`**
+**Bukti relay berhasil meneruskan ke server DHCP (`10.69.4.10`), dijalankan di `tengen`**
 
 ```sh
 tcpdump -i eth0 -n port 67 -vv
 ```
 ![]()
-> **[Screenshot: `tcpdump` pada `tengen` (eth0) — `DHCPDISCOVER` dari subnet N2/N3 dengan `giaddr` = `10.69.2.1` (N2) dan `10.69.3.1` (N3)]**
+> **[Screenshot: `tcpdump` pada `tengen` (eth0), `DHCPDISCOVER` dari subnet N2/N3 dengan `giaddr` = `10.69.2.1` (N2) dan `10.69.3.1` (N3)]**
 
-Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi` (`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan, dhcpd tidak mengirim `DHCPOFFER`. Oleh karena itu, dapat disimpulkan bahwa **relay telah berjalan sesuai konfigurasi** — hanya `pool` untuk N2 dan N3 yang belum ditambahkan (akan dilakukan pada Soal 4–5).
+Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi` (`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan, dhcpd tidak mengirim `DHCPOFFER`. Relay berjalan sesuai konfigurasi. Hanya `pool` untuk N2 dan N3 yang belum ditambahkan (akan dilakukan pada Soal 4–5).
 
 ---
 
-## Soal 4 — DHCP Pool & Class Network 2
+## Soal 4: DHCP Pool & Class Network 2
 
 **Tujuan.** Membagi pool N2: Pool 1 (`10.69.2.10–10.69.2.35`) untuk `itadori`, `fushiguro`; Pool 2 (`10.69.2.70–10.69.2.95`) untuk `zenin`, `okkotsu`. Rentang `10.69.2.36–10.69.2.69` dilarang. Pisahkan menggunakan **DHCP class** berdasarkan MAC.
 
-Script: `/root/04-dhcp-n2.sh` (disimpan di `script/tengen/04-dhcp-n2.sh`) — **dijalankan di `tengen`**.
+Script: `/root/04-dhcp-n2.sh` (disimpan di `script/tengen/04-dhcp-n2.sh`), **dijalankan di `tengen`**.
 
 > **Catatan.** Blok `subnet` N2/N3 sudah dideklarasikan pada Soal 2; script Soal 4–5 menambahkan `class`/`pool` pada berkas `dhcpd.conf` yang sama, sehingga berkas akhir memuat deklarasi `subnet` (Soal 2) sekaligus `class`/`pool` (Soal 4–5).
+>
+> **Catatan (peringatan `overlaps`).** Karena `subnet` N2/N3 dideklarasikan dua kali (Soal 2 lalu Soal 4–5), `dhcpd` menulis `Warning: subnet 10.69.2.0/24 overlaps subnet 10.69.2.0/24` saat start. Ini **tidak fatal** — lease tetap dibagikan. Deklarasi N2/N3 pada Soal 2 wajib ada sesuai permintaan soal, jadi blok tersebut tidak dihapus.
+>
+> **Catatan (MAC hardcode).** Nilai `subclass`/`host` di-hardcode dari topologi saat ini. Bila MAC NIC node berubah setelah rebuild GNS3, perbarui daftar MAC di `04-dhcp-n2.sh`/`05-dhcp-n3.sh` agar pool & fixed address tetap cocok.
 
-Konfigurasi `/etc/dhcp/dhcpd.conf` (bagian N2) — **dijalankan di `tengen`**:
+Konfigurasi `/etc/dhcp/dhcpd.conf` (bagian N2), **dijalankan di `tengen`**:
 
 ```sh
 cat /etc/dhcp/dhcpd.conf
@@ -256,8 +264,7 @@ cat /etc/dhcp/dhcpd.conf
 ![](./Attachments/image-22.webp)
 > **[Screenshot: konfigurasi pool & class N2 pada `tengen`]**
 
-Validasi — **dijalankan di `tengen`**:
-
+Validasi, **dijalankan di `tengen`**:
 ```sh
 dhcpd -t -cf /etc/dhcp/dhcpd.conf
 service isc-dhcp-server restart
@@ -267,7 +274,7 @@ service isc-dhcp-server status
 ![](./Attachments/image-23.webp)
 > **[Screenshot: validasi + status `isc-dhcp-server` setelah Soal 4]**
 
-Verifikasi client N2 memperoleh lease sesuai pool — **dijalankan di tiap klien N2** (`itadori`, `fushiguro`, `zenin`, `okkotsu`):
+Verifikasi client N2 memperoleh lease sesuai pool, **dijalankan di tiap klien N2** (`itadori`, `fushiguro`, `zenin`, `okkotsu`):
 
 ```sh
 # itadori & fushiguro -> 10.69.2.10–.35; zenin & okkotsu -> 10.69.2.70–.95
@@ -297,14 +304,13 @@ udhcpc -i eth0
 
 ---
 
-## Soal 5 — Network 3: Short & Long Lease
+## Soal 5: Network 3 (Short & Long Lease)
 
 **Tujuan.** N3: `ino`, `kusakabe` short lease **1800s** (pool `.3.10–.3.89`); `miwa` long lease **43200s** (pool `.3.100–.3.199`). Atur `default-lease-time`/`max-lease-time` per kelas. Tambah DNS `10.69.1.2,10.69.1.3` + `domain-search jujutsu.K11.com`.
 
-Script: `/root/05-dhcp-n3.sh` (`script/tengen/05-dhcp-n3.sh`) — **dijalankan di `tengen`**.
+Script: `/root/05-dhcp-n3.sh` (`script/tengen/05-dhcp-n3.sh`), **dijalankan di `tengen`**.
 
-Konfigurasi N3 di `/etc/dhcp/dhcpd.conf` — **dijalankan di `tengen`**:
-
+Konfigurasi N3 di `/etc/dhcp/dhcpd.conf`, **dijalankan di `tengen`**:
 ```sh
 cat /etc/dhcp/dhcpd.conf
 ```
@@ -312,7 +318,7 @@ cat /etc/dhcp/dhcpd.conf
 ![](./Attachments/image-28.webp)
 > **[Screenshot: konfigurasi N3 (short/long + domain-search) pada `tengen`]**
 
-Verifikasi lease time berdasarkan IP atau MAC (karena `udhcpc` klien Alpine tidak mengirim hostname ke `dhcpd.leases` secara default) — **dijalankan di `tengen`**:
+Verifikasi lease time berdasarkan IP atau MAC (karena `udhcpc` klien Alpine tidak mengirim hostname ke `dhcpd.leases` secara default), **dijalankan di `tengen`**:
 
 ```sh
 # Cek selisih timestamp 'starts' dan 'ends'
@@ -325,13 +331,13 @@ cat /var/lib/dhcp/dhcpd.leases | grep -B 1 -A 8 '02:42:'
 
 ---
 
-## Soal 6 — Static Lease Kugisaki `.3.99`
+## Soal 6: Static Lease Kugisaki `.3.99`
 
 **Tujuan.** `kugisaki` static lease berdasarkan MAC → `10.69.3.99` (di luar seluruh pool).
 
 Bagian `host kugisaki { hardware ethernet ...; fixed-address 10.69.3.99; }` sudah disertakan di script Soal 5.
 
-Verifikasi konfigurasi — **dijalankan di `tengen`**:
+Verifikasi konfigurasi, **dijalankan di `tengen`**:
 
 ```sh
 cat /etc/dhcp/dhcpd.conf | grep -A 10 'host kugisaki'
@@ -341,7 +347,7 @@ service isc-dhcp-server restart; dhcpd -t
 ![](./Attachments/image-30.webp)
 > **[Screenshot: konfigurasi static lease `kugisaki` + validasi]**
 
-Cek alamat di klien `kugisaki` — **dijalankan di `kugisaki`**:
+Cek alamat di klien `kugisaki`, **dijalankan di `kugisaki`**:
 
 ```sh
 ip -br addr
@@ -350,21 +356,19 @@ ip -br addr
 ![](./Attachments/image-31.webp)
 > **[Screenshot: `ip -br addr` `kugisaki` menunjukkan `10.69.3.99/24`]**
 
-**Catatan penting (sering bikin bingung).** isc-dhcp **tidak** menuliskan alamat dari deklarasi `host`/`fixed-address` ke `/var/lib/dhcp/dhcpd.leases`. File itu hanya mencatat lease yang dialokasikan **dinamis** (Pool 1/Pool 2/short/long). Karena itu `grep` kugisaki di `dhcpd.leases` memang **kosong** — ini perilaku benar, bukan kegagalan. Kugisaki tetap menerima `.3.99`.
+**Catatan penting (sering bikin bingung).** isc-dhcp **tidak** menuliskan alamat dari deklarasi `host`/`fixed-address` ke `/var/lib/dhcp/dhcpd.leases`. File itu hanya mencatat lease yang dialokasikan **dinamis** (Pool 1/Pool 2/short/long). Karena itu `grep` kugisaki di `dhcpd.leases` memang **kosong**, ini perilaku benar, bukan kegagalan. Kugisaki tetap menerima `.3.99`.
 
 Bukti penggantinya:
 
-**1) Di klien `kugisaki`** — alamat sesuai reservasi:
-
+**1) Di klien `kugisaki`**, alamat sesuai reservasi:
 ```sh
 ip -br addr show eth0        # -> 10.69.3.99/24
 ```
 
-![]()
+![](./Attachments/image-34.webp)
 > **[Screenshot: `ip -br addr` `kugisaki` = `10.69.3.99/24`]**
 
-**2) Di `tengen`** — server meng-ACK `.3.99` (memakai capture Soal 8). Jalankan capture di `tengen`, picu renew di `kugisaki`, lalu lihat `Your-IP`/`DHCPACK` untuk MAC kugisaki:
-
+**2) Di `tengen`**, server meng-ACK `.3.99` (memakai capture Soal 8). Jalankan capture di `tengen`, picu renew di `kugisaki`, lalu lihat `Your-IP`/`DHCPACK` untuk MAC kugisaki:
 ```sh
 # di tengen
 sh /root/08-capture-dora.sh 30
@@ -374,109 +378,132 @@ udhcpc -i eth0 -n -q
 grep -A1 '02:42:69:c1:4e:00' /tmp/dora.txt | grep -E 'Your-IP|DHCP-Message'
 ```
 
-![]()
+![](./Attachments/image-35.webp)
+
+![](./Attachments/image-36.webp)
 > **[Screenshot: `DHCPACK`/`Your-IP 10.69.3.99` untuk MAC `02:42:69:c1:4e:00`]**
 
 ---
 
-## Soal 7 — Verifikasi Konfigurasi Per-Client
+## Soal 7: Verifikasi Konfigurasi Per-Client
 
 **Tujuan.** Pastikan setiap client N2–N3 menerima: mask `/24`, gateway & broadcast benar, DNS `10.69.1.2,10.69.1.3`, domain-search sesuai. Cocokkan lease dengan `/var/lib/dhcp/dhcpd.leases` di `tengen`. Tidak ada tabrakan atau IP di luar kebijakan pool.
 
-Sisi klien — **dijalankan di tiap klien N2/N3** (`itadori`, `fushiguro`, `zenin`, `okkotsu`, `ino`, `kusakabe`, `miwa`, `kugisaki`): `script/common/07-verify-client.sh` (terpasang sebagai `/root/07-verify-client.sh`). Script menampilkan IP/mask/gateway/broadcast/DNS/domain-search, lalu menandai `[OK]`/`[!!]` apakah alamat klien berada di dalam kebijakan pool-nya.
+Sisi klien, **dijalankan di tiap klien N2/N3** (`itadori`, `fushiguro`, `zenin`, `okkotsu`, `ino`, `kusakabe`, `miwa`, `kugisaki`): `script/common/07-verify-client.sh` (terpasang sebagai `/root/07-verify-client.sh`). Script menampilkan IP/mask/gateway/broadcast/DNS/domain-search, lalu menandai `[OK]`/`[!!]` apakah alamat klien berada di dalam kebijakan pool-nya. Parsing memakai `ip -4 addr show dev eth0` (tanpa flag `-o`/`-br`, karena BusyBox `ip` pada image client tidak mendukungnya).
 
 ```sh
 sh /root/07-verify-client.sh
 ```
-![]()
+
+![](./Attachments/image-39.webp)
+![](./Attachments/image-41.webp)
+![](./Attachments/image-42.webp)
+![](./Attachments/image-43.webp)
+![](./Attachments/image-44.webp)
+![](./Attachments/image-45.webp)
+![](./Attachments/image-46.webp)
+![](./Attachments/image-47.webp)
 > **[Screenshot: IP/mask/gateway/broadcast/DNS/domain-search + hasil [OK] per klien Divisi A & B]**
 
-Sisi server — **dijalankan di `tengen`**: `script/tengen/07-verify-leases.sh` (`/root/07-verify-leases.sh`) merekap `/var/lib/dhcp/dhcpd.leases` dan mencocokkan tiap MAC klien dengan rentang pool/lease-nya.
+Sisi server, **dijalankan di `tengen`**: `script/tengen/07-verify-leases.sh` (`/root/07-verify-leases.sh`) merekap `/var/lib/dhcp/dhcpd.leases` dan mencocokkan tiap MAC klien dengan rentang pool/lease-nya.
 
 ```sh
 sh /root/07-verify-leases.sh
 ```
-![]()
+
+![](./Attachments/image-40.webp)
 > **[Screenshot: rekap lease aktif di `tengen` + hasil pencocokan kebijakan]**
 
-Catatan: `kugisaki` memperoleh `10.69.3.99` dari deklarasi `host` (fixed-address), namun isc-dhcp 4.4.3 tidak menuliskan lease untuk host statis ke `dhcpd.leases` — pembuktian kugisaki memakai IP di sisi klien + blok `host kugisaki` di `dhcpd.conf` (Soal 6).
+Catatan: `kugisaki` memperoleh `10.69.3.99` dari deklarasi `host` (fixed-address), namun isc-dhcp 4.4.3 tidak menuliskan lease untuk host statis ke `dhcpd.leases`, pembuktian kugisaki memakai IP di sisi klien + blok `host kugisaki` di `dhcpd.conf` (Soal 6).
 
 ---
 
-## Soal 8 — Packet Capture DORA + giaddr
+## Soal 8: Packet Capture DORA + giaddr
 
 **Tujuan.** Buktikan urutan **DHCPDISCOVER → DHCPOFFER → DHCPREQUEST → DHCPACK** saat client minta lease baru. Tunjukkan `giaddr` sesuai interface `jichi` dari subnet client.
 
-Capture di `tengen` memakai script `script/tengen/08-capture-dora.sh` (`/root/08-capture-dora.sh`) — **dijalankan di `tengen`**. Jalankan, lalu picu renew pada klien N2/N3 (**dijalankan di klien**, mis. `fushiguro`: `udhcpc -i eth0 -n -q`) selama jendela capture. Opsi `-U` wajib agar tcpdump langsung menulis ke file; tanpanya file kosong saat dibaca.
+Capture di `tengen` memakai script `script/tengen/08-capture-dora.sh` (`/root/08-capture-dora.sh`), **dijalankan di `tengen`**. Jalankan, lalu picu renew pada klien N2/N3 (**dijalankan di klien**, mis. `fushiguro`: `udhcpc -i eth0 -n -q`) selama jendela capture. Opsi `-U` wajib agar tcpdump langsung menulis ke file; tanpanya file kosong saat dibaca.
 
 ```sh
 # di tengen
-sh /root/08-capture-dora.sh 40
-# selama script berjalan, di klien N2/N3:
+./08-capture-dora.sh 40
+# selama script berjalan, di klien N2/N3 selain kugisaki:
 udhcpc -i eth0 -n -q
 ```
-![]()
+
+![](./Attachments/image-48.webp)
+![](./Attachments/image-49.webp)
 > **[Screenshot: urutan Discover → Offer → Request → ACK + field `giaddr` = `10.69.2.1`/`10.69.3.1`]**
 
 Identifikasi: server IP (`10.69.4.10`), IP yang diberikan (sesuai pool/reservasi), lease time, `giaddr`.
 
 ---
 
-## Soal 9 — Gangguan Relay
+## Soal 9: Gangguan Relay
 
 **Tujuan.** Hentikan DHCP Relay di `jichi` → client gagal lease. Hidupkan kembali → lease benar.
 
-Di `jichi` gunakan `script/jichi/09-relay-fault.sh` (`/root/09-relay-fault.sh`) — **dijalankan di `jichi`**.
+Di `jichi` gunakan `script/jichi/09-relay-fault.sh` (`/root/09-relay-fault.sh`), **dijalankan di `jichi`**.
 
 ```sh
-# di jichi — hentikan relay
-sh /root/09-relay-fault.sh stop
-# di klien N2/N3 (mis. fushiguro) — paksa renew:
+# di jichi, hentikan relay
+service isc-dhcp-relay stop
+# di klien N2/N3 (mis. okkotsu), paksa renew:
 udhcpc -i eth0 -n -q      # -> 'no lease, failing'
 ```
-![]()
+
+![](./Attachments/image-51.webp)
+![](./Attachments/image-50.webp)
 > **[Screenshot: klien gagal memperoleh lease saat relay dihentikan]**
 
 ```sh
-# di jichi — hidupkan kembali relay
-sh /root/09-relay-fault.sh start
-# di klien — ulangi renew -> lease kembali diperoleh
+# di jichi, hidupkan kembali relay
+service isc-dhcp-relay start
+# di klien, ulangi renew -> lease kembali diperoleh
 udhcpc -i eth0 -n -q
 ```
-![]()
+
+![](./Attachments/image-52.webp)
+![](./Attachments/image-53.webp)
 > **[Screenshot: klien memperoleh lease kembali setelah relay dihidupkan]**
 
 ---
 
-## Soal 10 — Autostart + Restart Node
+## Soal 10: Autostart + Restart Node
 
 **Tujuan.** Autostart DHCP Server (`tengen`) dan DHCP Relay (`jichi`); restart kedua node; verifikasi semua kebijakan tetap berlaku.
 
-Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook, symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan lewat hook tersebut.
+Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook, symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan lewat hook tersebut. Baris hook `jichi` ditulis `jichi/01-setup-routing.sh`, dan baris hook `tengen` ditulis `common/01-static-ip.sh`; script hook `/root/<node>.sh` sendiri di-deploy oleh `push_configs.py`.
 
 ```sh
 sh /root/10-autostart.sh
 ```
-![]()
+
+
+![](./Attachments/image-55.webp)![](./Attachments/image-54.webp)
 > **[Screenshot: hook autostart + status service pada `tengen` dan `jichi`]**
 
 Restart kedua node (GNS3: stop lalu start). Setelah naik, verifikasi layanan:
 ```sh
 # di tengen
-service isc-dhcp-server status      # -> dhcpd running
+pgrep -a dhcpd      # -> dhcpd running
 # di jichi
 ps -ef | grep dhcrelay              # -> dhcrelay di eth2/eth3/eth4
 ```
-![]()
+![](./Attachments/image-57.webp)
+
+![](./Attachments/image-56.webp)
 > **[Screenshot: `dhcpd` & `dhcrelay` aktif lagi setelah restart]**
 
-Verifikasi akhir semua klien (Pool 1/Pool 2, short/long, fixed `.3.99`) — **dijalankan di tiap klien** dengan `07-verify-client.sh`, dan lease — **dijalankan di `tengen`** dengan `07-verify-leases.sh`:
-![]()
+Verifikasi akhir semua klien (Pool 1/Pool 2, short/long, fixed `.3.99`), **dijalankan di tiap klien** dengan `07-verify-client.sh`, dan lease, **dijalankan di `tengen`** dengan `07-verify-leases.sh`:
+
+![](./Attachments/image-58.webp)
+![](./Attachments/image-59.webp)
 > **[Screenshot: verifikasi akhir Soal 10]**
 
-> **Catatan (persistensi antar-restart).** Setiap node menjalankan `/root/<node>.sh` saat boot melalui baris `up bash /root/<node>.sh` di `/etc/network/interfaces` — `tengen.sh` menjalankan `02`+`04`+`05`, `jichi.sh` menjalankan `01`+`03`. File `/root` tersimpan pada volume node sehingga konfigurasi DHCP otomatis diterapkan ulang setiap restart. Helper `push_configs.py` (root repo) men-deploy ulang script `/root` dan config `/etc` via console node bila perlu.
+> **Catatan (persistensi antar-restart).** Setiap node menjalankan `/root/<node>.sh` saat boot melalui baris `up bash /root/<node>.sh` di `/etc/network/interfaces`, `tengen.sh` menjalankan `02`+`04`+`05`, `jichi.sh` menjalankan `01`+`03`. File `/root` tersimpan pada volume node sehingga konfigurasi DHCP otomatis diterapkan ulang setiap restart. Helper `push_configs.py` (root repo) men-deploy ulang script `/root` dan config `/etc` via console node bila perlu.
 
-## Soal 11 — DNS Master `utahime` & DNS Slave `shoko`
+## Soal 11: DNS Master `utahime` & DNS Slave `shoko`
 
 **Tujuan.** Membangun sistem penamaan domain `jujutsu.K11.com` agar setiap pos tidak perlu menghafal IP mentah. `utahime` (`10.69.1.2`) menjadi **DNS Master** dan `shoko` (`10.69.1.3`) menjadi **DNS Slave** dengan BIND9. Zona berisi **SOA record**, **NS delegasi** untuk kedua server (`ns1` = utahime, `ns2` = shoko), dan **allow-transfer** dari master hanya ke slave. Saat nomor **serial** di master dinaikkan, file zona harus tersinkronisasi otomatis ke slave.
 
@@ -551,7 +578,7 @@ dig @10.69.1.2 jujutsu.K11.com NS +short
 
 ### 11.4 Bukti Sinkronisasi Otomatis (Naikkan Serial)
 
-Serial dinaikkan di master (`./11-dns-master.sh bump`, serial `1` → `2`). Notify dikirim ke slave, dan zona tersinkronisasi otomatis — query ke **slave** pun menampilkan serial baru:
+Serial dinaikkan di master (`./11-dns-master.sh bump`, serial `1` → `2`). Notify dikirim ke slave, dan zona tersinkronisasi otomatis, query ke **slave** pun menampilkan serial baru:
 
 ```sh
 # di utahime
@@ -572,7 +599,7 @@ dig @10.69.1.2 jujutsu.K11.com AXFR   # Transfer failed.
 
 ---
 
-## Soal 12 — A Record, CNAME, Reverse DNS (PTR), dan DNS Forwarder
+## Soal 12: A Record, CNAME, Reverse DNS (PTR), dan DNS Forwarder
 
 **Tujuan.** Peta domain harus memetakan pintu masuk utama sekaligus tetap bisa mencari alamat di luar kawasan. Pada `utahime` ditambahkan **A record** `jujutsu.K11.com` yang mengarah ke `gojo`, **CNAME** `www` yang merujuk ke domain utama, **zona PTR** untuk melacak IP `gojo` kembali ke domain resminya, dan **DNS Forwarder** ke gateway internet `192.168.122.1`. Zona PTR ikut disinkronkan ke slave `shoko`.
 
