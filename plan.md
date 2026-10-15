@@ -75,6 +75,10 @@ iface eth0 inet dhcp
 - **S10** autostart DHCP server (tengen) + relay (jichi); restart node; verifikasi semua kebijakan tetap berlaku.
 - Script: `script/tengen/`, `script/jichi/` (relay).
 
+> **Catatan audit (diakui, sengaja tidak diperbaiki di Soal 1–10):**
+> - BIND9 (`utahime`/`shoko`) memakai `allow-query { any; }` + `recursion yes;` → open resolver. Aman untuk lab GNS3 tertutup; untuk produksi tambahkan `allow-recursion { 127.0.0.1; 10.69.0.0/16; };`. Di luar lingkup Soal 1–10.
+> - `subnet` N2/N3 dideklarasikan di Soal 2 lalu diulang di Soal 4–5 → peringatan `overlaps` non-fatal dari `dhcpd`; dipertahankan agar tiap script per-soal tetap terpisah dan Soal 2 tetap sesuai permintaan soal.
+
 ## Fase 3 — Soal 11–12: DNS
 
 - **S11** BIND9 `utahime` master + `shoko` slave domain `jujutsu.<xxxx>.com`; SOA, NS, allow-transfer; uji sinkron via naikkan serial + `dig`.
