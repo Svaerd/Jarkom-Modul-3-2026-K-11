@@ -309,6 +309,7 @@ ip -br addr
 
 ---
 
+## Soal 5 — Network 3: Short & Long Lease
 
 **Tujuan.** N3: `ino`, `kusakabe` short lease **1800s** (pool `.3.10–.3.89`); `miwa` long lease **43200s** (pool `.3.100–.3.199`). Atur `default-lease-time`/`max-lease-time` per kelas. Tambah DNS `10.69.1.2,10.69.1.3` + `domain-search jujutsu.K11.com`.
 
