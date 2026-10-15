@@ -197,3 +197,183 @@ service isc-dhcp-server restart
 
 ---
 
+## Soal 11 — DNS Master `utahime` & DNS Slave `shoko`
+
+**Tujuan.** Membangun sistem penamaan domain `jujutsu.K11.com` agar setiap pos tidak perlu menghafal IP mentah. `utahime` (`10.69.1.2`) menjadi **DNS Master** dan `shoko` (`10.69.1.3`) menjadi **DNS Slave** dengan BIND9. Zona berisi **SOA record**, **NS delegasi** untuk kedua server (`ns1` = utahime, `ns2` = shoko), dan **allow-transfer** dari master hanya ke slave. Saat nomor **serial** di master dinaikkan, file zona harus tersinkronisasi otomatis ke slave.
+
+**Skema.** Kedua node berada di Network 1 (DMZ) dan dijalankan sebagai container `debinet` (tanpa systemd), sehingga `named` dijalankan langsung (`nohup named -f`) alih-alih lewat `service`.
+
+| Host | IP | Peran | NS |
+|------|----|-------|----|
+| `utahime` | `10.69.1.2` | DNS Master | `ns1.jujutsu.K11.com` |
+| `shoko`   | `10.69.1.3` | DNS Slave  | `ns2.jujutsu.K11.com` |
+
+### 11.1 Konfigurasi DNS Master (`utahime`)
+
+Script `/root/11-dns-master.sh` memasang `bind9`, menulis `named.conf.options`, `named.conf.local`, dan file zona, lalu menjalankan `named`. Bagian penting:
+
+```sh
+zone "jujutsu.K11.com" {
+	type master;
+	file "/etc/bind/zones/db.jujutsu.K11.com";
+	allow-transfer { 10.69.1.3; };   # hanya slave shoko
+	notify yes;
+	also-notify { 10.69.1.3; };
+};
+```
+
+File zona memuat SOA, delegasi NS, dan glue A record kedua NS:
+
+```sh
+@       IN      SOA     ns1.jujutsu.K11.com. admin.jujutsu.K11.com. (
+			1         ; Serial
+			604800    ; Refresh
+			86400     ; Retry
+			2419200   ; Expire
+			604800 )  ; Negative Cache TTL
+;
+@       IN      NS      ns1.jujutsu.K11.com.
+@       IN      NS      ns2.jujutsu.K11.com.
+ns1     IN      A       10.69.1.2
+ns2     IN      A       10.69.1.3
+```
+
+![](./Attachments/image-15.webp)
+> **[Screenshot: script `11-dns-master.sh` di `/root` + `named` berjalan pada `utahime`]**
+
+### 11.2 Konfigurasi DNS Slave (`shoko`)
+
+Script `/root/11-dns-slave.sh` mendeklarasikan zona bertipe **slave** yang mengambil salinan dari master (file zona tidak dibuat manual):
+
+```sh
+zone "jujutsu.K11.com" {
+	type slave;
+	file "/var/cache/bind/db.jujutsu.K11.com";
+	masters { 10.69.1.2; };
+	allow-notify { 10.69.1.2; };
+};
+```
+
+![](./Attachments/image-16.webp)
+> **[Screenshot: script `11-dns-slave.sh` di `/root` + file zona hasil transfer di `shoko`]**
+
+### 11.3 Verifikasi Query `dig` dari Client (`itadori`)
+
+Dari `itadori` (klien Network 2, DHCP `10.69.2.10/24`) dilakukan query ke **kedua** server. SOA dan NS dilayani oleh master maupun slave:
+
+```sh
+dig @10.69.1.2 jujutsu.K11.com SOA +short   # dari master
+dig @10.69.1.3 jujutsu.K11.com SOA +short   # dari slave
+dig @10.69.1.2 jujutsu.K11.com NS +short
+```
+
+![](./Attachments/image-17.webp)
+> **[Screenshot: `dig` SOA & NS ke master dan slave dari `itadori`]**
+
+### 11.4 Bukti Sinkronisasi Otomatis (Naikkan Serial)
+
+Serial dinaikkan di master (`./11-dns-master.sh bump`, serial `1` → `2`). Notify dikirim ke slave, dan zona tersinkronisasi otomatis — query ke **slave** pun menampilkan serial baru:
+
+```sh
+# di utahime
+./11-dns-master.sh bump
+# di itadori
+dig @10.69.1.3 jujutsu.K11.com SOA +short
+# -> ns1.jujutsu.K11.com. admin.jujutsu.K11.com. 2 604800 86400 2419200 604800
+```
+
+![](./Attachments/image-18.webp)
+> **[Screenshot: serial slave ikut naik menjadi 2 setelah bump di master]**
+
+Sebagai bukti tambahan bahwa `allow-transfer` hanya berlaku untuk slave, transfer zona dari client **ditolak**:
+
+```sh
+dig @10.69.1.2 jujutsu.K11.com AXFR   # Transfer failed.
+```
+
+---
+
+## Soal 12 — A Record, CNAME, Reverse DNS (PTR), dan DNS Forwarder
+
+**Tujuan.** Peta domain harus memetakan pintu masuk utama sekaligus tetap bisa mencari alamat di luar kawasan. Pada `utahime` ditambahkan **A record** `jujutsu.K11.com` yang mengarah ke `gojo`, **CNAME** `www` yang merujuk ke domain utama, **zona PTR** untuk melacak IP `gojo` kembali ke domain resminya, dan **DNS Forwarder** ke gateway internet `192.168.122.1`. Zona PTR ikut disinkronkan ke slave `shoko`.
+
+**Ringkasan record yang ditambahkan:**
+
+| Nama | Tipe | Nilai |
+|------|------|-------|
+| `jujutsu.K11.com` | A | `10.69.1.4` (gojo) |
+| `www.jujutsu.K11.com` | CNAME | `jujutsu.K11.com.` |
+| `4.1.69.10.in-addr.arpa` | PTR | `jujutsu.K11.com.` |
+
+### 12.1 Konfigurasi Master (`utahime`)
+
+Script `/root/12-domain-ptr-forwarder.sh` menulis ulang zona forward dan menambah zona reverse, lalu mengaktifkan forwarder:
+
+```sh
+options {
+	forwarders { 192.168.122.1; };   # gateway internet
+	recursion yes;
+	dnssec-validation no;
+};
+```
+
+Isi zona forward (tambahan Soal 12):
+
+```sh
+@       IN      A       10.69.1.4          ; pintu masuk utama -> gojo
+www     IN      CNAME   jujutsu.K11.com.  ; alias www -> domain utama
+```
+
+Zona reverse `1.69.10.in-addr.arpa`:
+
+```sh
+@       IN      SOA     ns1.jujutsu.K11.com. admin.jujutsu.K11.com. ( ... )
+@       IN      NS      ns1.jujutsu.K11.com.
+@       IN      NS      ns2.jujutsu.K11.com.
+4       IN      PTR     jujutsu.K11.com.  ; 10.69.1.4 -> jujutsu.K11.com
+```
+
+![](./Attachments/image-19.webp)
+> **[Screenshot: zona forward + PTR + forwarder pada `utahime`]**
+
+### 12.2 Zona PTR pada Slave (`shoko`)
+
+`shoko` mendeklarasikan **dua** zona slave (forward + reverse) sehingga keduanya ikut tersinkron otomatis dari master:
+
+```sh
+zone "1.69.10.in-addr.arpa" {
+	type slave;
+	file "/var/cache/bind/db.1.69.10";
+	masters { 10.69.1.2; };
+	allow-notify { 10.69.1.2; };
+};
+```
+
+![](./Attachments/image-20.webp)
+> **[Screenshot: file zona hasil transfer (`db.jujutsu.K11.com` dan `db.1.69.10`) di `shoko`]**
+
+### 12.3 Verifikasi dari Client (`itadori`)
+
+Dari `itadori` diuji A record, CNAME, PTR, dan forwarder di **kedua** server:
+
+```sh
+dig @10.69.1.2 jujutsu.K11.com A +short          # -> 10.69.1.4
+dig @10.69.1.2 www.jujutsu.K11.com CNAME +short  # -> jujutsu.K11.com.
+dig @10.69.1.2 -x 10.69.1.4 +short               # -> jujutsu.K11.com.
+dig @10.69.1.2 google.com A +short               # -> (via forwarder)
+```
+
+Hasil: A record mengarah ke `10.69.1.4` baik di master maupun slave, `www` menunjuk `jujutsu.K11.com.` lalu resolve ke `10.69.1.4`, dan PTR `10.69.1.4` mengembalikan `jujutsu.K11.com.`.
+
+Client juga tetap dapat menjangkau alamat di luar kawasan: resolusi `google.com` diteruskan forwarder ke `192.168.122.1`, dan ping berhasil.
+
+```sh
+ping -c 3 google.com
+# 3 packets transmitted, 3 received, 0% packet loss
+```
+
+![](./Attachments/image-21.webp)
+> **[Screenshot: `dig` A/CNAME/PTR dan `ping google.com` dari `itadori`]**
+
+---
+
