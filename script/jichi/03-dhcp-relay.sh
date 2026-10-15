@@ -4,7 +4,7 @@
 # Network 1 (eth1) & 4 (eth4) tak di-relay (server lokal / DMZ statis).
 # Prefix internal 10.69 (verifikasi ke Master Sheet asisten).
 
-# resolusi awal (pola AGENTS.md)
+# resolusi awal
 echo 'nameserver 192.168.122.1' > /etc/resolv.conf
 
 # Image debinet = Debian buster (EOL): mirror deb.debian.org 404 -> archive.debian.org.

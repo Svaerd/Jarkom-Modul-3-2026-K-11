@@ -507,7 +507,7 @@ udhcpc -i eth0 -n -q
 **Tujuan.** Autostart DHCP Server (`tengen`) dan DHCP Relay (`jichi`); restart kedua node;
 verifikasi semua kebijakan tetap berlaku.
 
-Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook, symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan lewat hook tersebut. Baris hook `jichi` ditulis `jichi/01-setup-routing.sh`, dan baris hook `tengen` ditulis `common/01-static-ip.sh`; script hook `/root/<node>.sh` sendiri di-deploy oleh `push_configs.py`.
+Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook, symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan lewat hook tersebut. Baris hook `jichi` ditulis `jichi/01-setup-routing.sh`, dan baris hook `tengen` ditulis `common/01-static-ip.sh`; script hook `/root/<node>.sh` sendiri dibuat saat menyiapkan node.
 
 ```sh
 sh /root/10-autostart.sh
@@ -538,8 +538,8 @@ Verifikasi akhir semua klien (Pool 1/Pool 2, short/long, fixed `.3.99`), **dijal
 > **Catatan (persistensi antar-restart).** Setiap node menjalankan `/root/<node>.sh` saat boot
 > melalui baris `up bash /root/<node>.sh` di `/etc/network/interfaces` — `tengen.sh` menjalankan
 > `02`+`04`+`05`, `jichi.sh` menjalankan `01`+`03`. File `/root` tersimpan pada volume node sehingga
-> konfigurasi DHCP otomatis diterapkan ulang setiap restart. Helper `push_configs.py` (root repo)
-> men-deploy ulang script `/root` dan config `/etc` via console node bila perlu.
+> konfigurasi DHCP otomatis diterapkan ulang setiap restart. Script `/root` dan config `/etc`
+> bisa di-deploy ulang lewat console node bila perlu.
 
 ---
 

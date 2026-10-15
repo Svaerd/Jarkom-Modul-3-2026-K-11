@@ -1,7 +1,7 @@
 #!/bin/sh
 # Set IP statis + gateway untuk host infrastruktur (Soal 1).
 # Jalankan di node masing-masing; IP ditentukan dari hostname (bisa di-override: ./01-static-ip.sh <nama>).
-# Skema IP usulan K-11 (lihat AGENTS.md) — SESUAIKAN bila tabel spesifikasi asisten berbeda.
+# Skema IP usulan K-11 — SESUAIKAN bila tabel spesifikasi asisten berbeda.
 
 HOST=$(printf '%s' "${1:-$(hostname)}" | tr 'A-Z' 'a-z')
 
@@ -33,12 +33,12 @@ iface eth0 inet static
 EOF
 
 # Soal 10: autostart — /etc/network/interfaces menjalankan /root/<node>.sh saat boot.
-# Hook /root/tengen.sh dibuat push_configs.py; hanya tengen yang memilikinya.
+# Hook /root/tengen.sh dibuat saat deploy; hanya tengen yang memilikinya.
 if [ "$HOST" = tengen ]; then
 	printf 'up bash /root/tengen.sh\n' >> /etc/network/interfaces
 fi
 
-# resolver sementara sampai DNS internal hidup (pola AGENTS.md)
+# resolver sementara sampai DNS internal hidup
 echo 'nameserver 192.168.122.1' > /etc/resolv.conf
 
 # image debinet tak punya ifupdown -> apply langsung pakai ip (idempotent)

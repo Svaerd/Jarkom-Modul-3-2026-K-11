@@ -120,7 +120,7 @@ sleep 1
 nohup /usr/sbin/named -f -c /etc/bind/named.conf -u bind >/var/log/named.log 2>&1 &
 sleep 2
 
-# resolver utahime = dirinya sendiri (AGENTS: DNS server pakai dirinya)
+# resolver utahime = dirinya sendiri (DNS server pakai dirinya sendiri)
 cat > /etc/resolv.conf <<EOF
 nameserver 127.0.0.1
 search K11.com

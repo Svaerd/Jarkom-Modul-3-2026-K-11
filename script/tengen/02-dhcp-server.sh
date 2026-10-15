@@ -4,7 +4,7 @@
 # Pool/lease/fixed address diisi bertahap di Soal 4-6.
 # Prefix internal 10.69 (verifikasi ke Master Sheet asisten).
 
-# resolusi awal (pola AGENTS.md)
+# resolusi awal
 echo 'nameserver 192.168.122.1' > /etc/resolv.conf
 
 # Image debinet = Debian buster (EOL): mirror deb.debian.org sudah 404,
