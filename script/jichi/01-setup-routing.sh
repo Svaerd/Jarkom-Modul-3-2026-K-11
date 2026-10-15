@@ -31,6 +31,9 @@ auto eth4
 iface eth4 inet static
 	address 10.69.4.1
 	netmask 255.255.255.0
+
+up bash /root/jichi.sh
+
 EOF
 
 # flush dulu supaya script aman dijalankan ulang
