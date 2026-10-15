@@ -32,6 +32,12 @@ iface eth0 inet static
 	gateway $GW
 EOF
 
+# Soal 10: autostart — /etc/network/interfaces menjalankan /root/<node>.sh saat boot.
+# Hook /root/tengen.sh dibuat push_configs.py; hanya tengen yang memilikinya.
+if [ "$HOST" = tengen ]; then
+	printf 'up bash /root/tengen.sh\n' >> /etc/network/interfaces
+fi
+
 # resolver sementara sampai DNS internal hidup (pola AGENTS.md)
 echo 'nameserver 192.168.122.1' > /etc/resolv.conf
 
