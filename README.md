@@ -204,7 +204,15 @@ cat /etc/dhcp/dhcpd.conf
 ![](./Attachments/image-11.webp)
 
 > **[Screenshot: `/etc/dhcp/dhcpd.conf` pada `tengen`]**
+
 ---
+
+## Soal 3: DHCP Relay `jichi`
+
+**Tujuan.** Permintaan alamat dari Divisi A dan Divisi B tidak dapat menyeberangi subnet secara
+langsung. `jichi` dikonfigurasi sebagai **DHCP Relay** menuju `tengen` (`10.69.4.10`), memakai
+`eth2` untuk Network 2 dan `eth3` untuk Network 3. Client dari kedua subnet harus berhasil
+memperoleh lease melalui relay.
 
 **Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3 eth4"` (`eth4` = sisi server `tengen`, tanpa ini balasan DHCP tak kembali), lalu restart service. Disimpan sebagai script `/root/03-dhcp-relay.sh`:
 
