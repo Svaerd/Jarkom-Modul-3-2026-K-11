@@ -1,15 +1,17 @@
 # Jarkom-Modul-3-2026-K-11
 
-Laporan Praktikum Modul 3: Komunikasi Data & Jaringan Komputer 2026
-**Curtain Protocol: Shibuya Incident, Pemulihan Jaringan dan Layanan Jujutsu High**
+Laporan Praktikum Modul 3: Komunikasi Data & Jaringan Komputer 2026 **Curtain Protocol: Shibuya
+Incident, Pemulihan Jaringan dan Layanan Jujutsu High**
 
 Anggota Kelompok K-11:
+
 - Husam Danish (5027251060) - 1-10
 - Hasheemi Rafsanjani (5027251015) - 11-20
 
 ![](./Attachments/image-38.webp)
 
-Konvensi: prefix jaringan internal `10.69.x.x`, netmask `/24`, domain `jujutsu.K11.com`. Setiap blok perintah diberi keterangan **dijalankan di `<node>`**, node tempat perintah itu dieksekusi.
+Konvensi: prefix jaringan internal `10.69.x.x`, netmask `/24`, domain `jujutsu.K11.com`. Setiap blok
+perintah diberi keterangan **dijalankan di `<node>`**, node tempat perintah itu dieksekusi.
 
 ## Soal 1: Konektivitas Dasar dan Routing `jichi`
 
@@ -20,13 +22,13 @@ sesuai rancangan.
 
 **Pemetaan interface `jichi`:**
 
-| Interface | Peran | Alamat |
-|-----------|-------|--------|
-| `eth0`   | WAN (DHCP dari NAT1) | `192.168.122.207/24` (nilai bisa berubah tiap boot) |
-| `eth1`   | Gateway Network 1 (DMZ) | `10.69.1.1/24` |
-| `eth2`   | Gateway Network 2 (Klien Divisi A) | `10.69.2.1/24` |
-| `eth3`   | Gateway Network 3 (Klien Divisi B) | `10.69.3.1/24` |
-| `eth4`   | Gateway Network 4 (Data Center) | `10.69.4.1/24` |
+| Interface | Peran                              | Alamat                                              |
+| --------- | ---------------------------------- | --------------------------------------------------- |
+| `eth0`    | WAN (DHCP dari NAT1)               | `192.168.122.207/24` (nilai bisa berubah tiap boot) |
+| `eth1`    | Gateway Network 1 (DMZ)            | `10.69.1.1/24`                                      |
+| `eth2`    | Gateway Network 2 (Klien Divisi A) | `10.69.2.1/24`                                      |
+| `eth3`    | Gateway Network 3 (Klien Divisi B) | `10.69.3.1/24`                                      |
+| `eth4`    | Gateway Network 4 (Data Center)    | `10.69.4.1/24`                                      |
 
 ### 1.1 Konfigurasi Interface `jichi`
 
@@ -78,6 +80,7 @@ Hasil `ip addr show` pada `jichi` (semua interface naik dengan alamat benar):
 ![|500](./Attachments/image-1.webp)
 
 IPv4 forwarding aktif, **dijalankan di `jichi`**:
+
 ```sh
 cat /proc/sys/net/ipv4/ip_forward
 ```
@@ -85,6 +88,7 @@ cat /proc/sys/net/ipv4/ip_forward
 ![ip_forward = 1](./Attachments/image-2.webp)
 
 Aturan masquerade pada tabel NAT, **dijalankan di `jichi`**:
+
 ```sh
 iptables -t nat -L POSTROUTING -v -n
 ```
@@ -94,6 +98,7 @@ iptables -t nat -L POSTROUTING -v -n
 ### 1.3 Verifikasi Gateway (`jichi` → NAT)
 
 `jichi` dapat menjangkau gateway NAT `192.168.122.1`, **dijalankan di `jichi`**:
+
 ```sh
 ping -c3 192.168.122.1
 ```
@@ -109,7 +114,8 @@ Forwarding diuji dari host infrastruktur menuju gateway network-nya. Contoh pada
 ping -c3 10.69.4.1
 ```
 
-Dan dari host klien/infrastruktur melalui masquerade `jichi`, contoh `tengen` (Network 4), **dijalankan di `tengen`**:
+Dan dari host klien/infrastruktur melalui masquerade `jichi`, contoh `tengen` (Network 4),
+**dijalankan di `tengen`**:
 
 ```sh
 ping -c3 1.1.1.1
@@ -125,6 +131,7 @@ ping -c3 1.1.1.1
 ```
 
 ![](./Attachments/image-7.webp)
+
 > **[Screenshot: `ping -c3 10.69.1.1` dari `utahime` (Network 1)]**
 
 ![](./Attachments/image-10.webp)
@@ -162,9 +169,11 @@ Rancangan:
 | 4       | `inumaki` (DB slave)           | `10.69.4.9/24`  | `10.69.4.1` |
 | 4       | `tengen` (DHCP server)         | `10.69.4.10/24` | `10.69.4.1` |
 
-Contoh bukti IP statis pada host Network 1 (`utahime`) dan host Network 4 (`tengen`), **dijalankan di `utahime` dan `tengen`**:
+Contoh bukti IP statis pada host Network 1 (`utahime`) dan host Network 4 (`tengen`), **dijalankan
+di `utahime` dan `tengen`**:
 
-> **Catatan.** Script `common/01-static-ip.sh` juga menambahkan baris hook `up bash /root/tengen.sh` pada `/etc/network/interfaces` milik `tengen` — prasyarat autostart DHCP server (Soal 10).
+> **Catatan.** Script `common/01-static-ip.sh` juga menambahkan baris hook `up bash /root/tengen.sh`
+> pada `/etc/network/interfaces` milik `tengen` — prasyarat autostart DHCP server (Soal 10).
 
 ```sh
 ip -br addr
@@ -189,7 +198,9 @@ subnet declaration”**.
 
 **Dijalankan di `tengen`.**
 
-**Langkah.** Install `isc-dhcp-server`, set `INTERFACESv4="eth0"`, tulis `/etc/dhcp/dhcpd.conf` berisi tiga deklarasi `subnet` (N4 lokal, N2 dan N3 untuk relay), lalu validasi dan restart service. Disimpan sebagai script `/root/02-dhcp-server.sh`:
+**Langkah.** Install `isc-dhcp-server`, set `INTERFACESv4="eth0"`, tulis `/etc/dhcp/dhcpd.conf`
+berisi tiga deklarasi `subnet` (N4 lokal, N2 dan N3 untuk relay), lalu validasi dan restart service.
+Disimpan sebagai script `/root/02-dhcp-server.sh`:
 
 ```sh
 cat /root/02-dhcp-server.sh
@@ -214,7 +225,9 @@ langsung. `jichi` dikonfigurasi sebagai **DHCP Relay** menuju `tengen` (`10.69.4
 `eth2` untuk Network 2 dan `eth3` untuk Network 3. Client dari kedua subnet harus berhasil
 memperoleh lease melalui relay.
 
-**Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3 eth4"` (`eth4` = sisi server `tengen`, tanpa ini balasan DHCP tak kembali), lalu restart service. Disimpan sebagai script `/root/03-dhcp-relay.sh`:
+**Langkah.** Install `isc-dhcp-relay`, set `SERVERS="10.69.4.10"` dan `INTERFACES="eth2 eth3 eth4"`
+(`eth4` = sisi server `tengen`, tanpa ini balasan DHCP tak kembali), lalu restart service. Disimpan
+sebagai script `/root/03-dhcp-relay.sh`:
 
 ```sh
 cat /root/03-dhcp-relay.sh
@@ -223,6 +236,7 @@ cat /root/03-dhcp-relay.sh
 ![](./Attachments/image-33.webp)
 
 Isi `/etc/default/isc-dhcp-relay`, **dijalankan di `jichi`**:
+
 ```sh
 cat /etc/default/isc-dhcp-relay
 ```
@@ -248,15 +262,15 @@ tcpdump -i eth2 -n port 67 or port 68
 ```
 
 ![](./Attachments/image-17.webp)
+
 > **[Screenshot: `tcpdump` pada `jichi` (eth2), `DHCPDISCOVER` dari client Network 2]**
 
-Client Network 2 tidak memperoleh lease karena pool DHCP belum dikonfigurasi (akan diisi pada Soal 4–5). Bukti pada klien Divisi A (N2) dan Divisi B (N3) saat ini:
+Client Network 2 tidak memperoleh lease karena pool DHCP belum dikonfigurasi (akan diisi pada Soal
+4–5). Bukti pada klien Divisi A (N2) dan Divisi B (N3) saat ini:
 
-Klien N2 (**dijalankan di klien N2, mis. `itadori`**):
-![](./Attachments/image-20.webp)
+Klien N2 (**dijalankan di klien N2, mis. `itadori`**): ![](./Attachments/image-20.webp)
 
-Klien N3 (**dijalankan di klien N3, mis. `ino`**):
-![](./Attachments/image-21.webp)
+Klien N3 (**dijalankan di klien N3, mis. `ino`**): ![](./Attachments/image-21.webp)
 
 **Bukti relay berhasil meneruskan ke server DHCP (`10.69.4.10`), dijalankan di `tengen`**
 
@@ -265,9 +279,14 @@ tcpdump -i eth0 -n port 67 -vv
 ```
 
 ![]()
-> **[Screenshot: `tcpdump` pada `tengen` (eth0), `DHCPDISCOVER` dari subnet N2/N3 dengan `giaddr` = `10.69.2.1` (N2) dan `10.69.3.1` (N3)]**
 
-Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi` (`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan, dhcpd tidak mengirim `DHCPOFFER`. Relay berjalan sesuai konfigurasi. Hanya `pool` untuk N2 dan N3 yang belum ditambahkan (akan dilakukan pada Soal 4–5).
+> **[Screenshot: `tcpdump` pada `tengen` (eth0), `DHCPDISCOVER` dari subnet N2/N3 dengan `giaddr` =
+> `10.69.2.1` (N2) dan `10.69.3.1` (N3)]**
+
+Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari `jichi`
+(`10.69.4.1`), dengan `Gateway-IP` (giaddr) sesuai subnet client. Tanpa pool DHCP yang diaktifkan,
+dhcpd tidak mengirim `DHCPOFFER`. Relay berjalan sesuai konfigurasi. Hanya `pool` untuk N2 dan N3
+yang belum ditambahkan (akan dilakukan pada Soal 4–5).
 
 ---
 
@@ -277,13 +296,21 @@ Pada sisi `tengen`, terlihat `DHCPDISCOVER` yang diteruskan oleh `dhcrelay` dari
 (`10.69.2.70–10.69.2.95`) untuk `zenin`, `okkotsu`. Rentang `10.69.2.36–10.69.2.69` dilarang.
 Pisahkan menggunakan **DHCP class** berdasarkan MAC.
 
-Script: `/root/04-dhcp-n2.sh` (disimpan di `script/tengen/04-dhcp-n2.sh`), **dijalankan di `tengen`**.
+Script: `/root/04-dhcp-n2.sh` (disimpan di `script/tengen/04-dhcp-n2.sh`), **dijalankan di
+`tengen`**.
 
-> **Catatan.** Blok `subnet` N2/N3 sudah dideklarasikan pada Soal 2; script Soal 4–5 menambahkan `class`/`pool` pada berkas `dhcpd.conf` yang sama, sehingga berkas akhir memuat deklarasi `subnet` (Soal 2) sekaligus `class`/`pool` (Soal 4–5).
+> **Catatan.** Blok `subnet` N2/N3 sudah dideklarasikan pada Soal 2; script Soal 4–5 menambahkan
+> `class`/`pool` pada berkas `dhcpd.conf` yang sama, sehingga berkas akhir memuat deklarasi `subnet`
+> (Soal 2) sekaligus `class`/`pool` (Soal 4–5).
 >
-> **Catatan (peringatan `overlaps`).** Karena `subnet` N2/N3 dideklarasikan dua kali (Soal 2 lalu Soal 4–5), `dhcpd` menulis `Warning: subnet 10.69.2.0/24 overlaps subnet 10.69.2.0/24` saat start. Ini **tidak fatal** — lease tetap dibagikan. Deklarasi N2/N3 pada Soal 2 wajib ada sesuai permintaan soal, jadi blok tersebut tidak dihapus.
+> **Catatan (peringatan `overlaps`).** Karena `subnet` N2/N3 dideklarasikan dua kali (Soal 2 lalu
+> Soal 4–5), `dhcpd` menulis `Warning: subnet 10.69.2.0/24 overlaps subnet 10.69.2.0/24` saat start.
+> Ini **tidak fatal** — lease tetap dibagikan. Deklarasi N2/N3 pada Soal 2 wajib ada sesuai
+> permintaan soal, jadi blok tersebut tidak dihapus.
 >
-> **Catatan (MAC hardcode).** Nilai `subclass`/`host` di-hardcode dari topologi saat ini. Bila MAC NIC node berubah setelah rebuild GNS3, perbarui daftar MAC di `04-dhcp-n2.sh`/`05-dhcp-n3.sh` agar pool & fixed address tetap cocok.
+> **Catatan (MAC hardcode).** Nilai `subclass`/`host` di-hardcode dari topologi saat ini. Bila MAC
+> NIC node berubah setelah rebuild GNS3, perbarui daftar MAC di `04-dhcp-n2.sh`/`05-dhcp-n3.sh` agar
+> pool & fixed address tetap cocok.
 
 Konfigurasi `/etc/dhcp/dhcpd.conf` (bagian N2), **dijalankan di `tengen`**:
 
@@ -296,6 +323,7 @@ cat /etc/dhcp/dhcpd.conf
 > **[Screenshot: konfigurasi pool & class N2 pada `tengen`]**
 
 Validasi, **dijalankan di `tengen`**:
+
 ```sh
 dhcpd -t -cf /etc/dhcp/dhcpd.conf
 service isc-dhcp-server restart
@@ -306,7 +334,8 @@ service isc-dhcp-server status
 
 > **[Screenshot: validasi + status `isc-dhcp-server` setelah Soal 4]**
 
-Verifikasi client N2 memperoleh lease sesuai pool, **dijalankan di tiap klien N2** (`itadori`, `fushiguro`, `zenin`, `okkotsu`):
+Verifikasi client N2 memperoleh lease sesuai pool, **dijalankan di tiap klien N2** (`itadori`,
+`fushiguro`, `zenin`, `okkotsu`):
 
 ```sh
 # itadori & fushiguro -> 10.69.2.10–.35; zenin & okkotsu -> 10.69.2.70–.95
@@ -330,6 +359,7 @@ ip -br addr
 > client tak menerima lease.
 
 Jika klien belum otomatis memperoleh IP, jalankan di klien tersebut (**dijalankan di klien N2/N3**):
+
 ```sh
 udhcpc -i eth0
 ```
@@ -338,19 +368,24 @@ udhcpc -i eth0
 
 ## Soal 5: Network 3 (Short & Long Lease)
 
-**Tujuan.** N3: `ino`, `kusakabe` short lease **1800s** (pool `.3.10–.3.89`); `miwa` long lease **43200s** (pool `.3.100–.3.199`). Atur `default-lease-time`/`max-lease-time` per kelas. Tambah DNS `10.69.1.2,10.69.1.3` + `domain-search jujutsu.K11.com`.
+**Tujuan.** N3: `ino`, `kusakabe` short lease **1800s** (pool `.3.10–.3.89`); `miwa` long lease
+**43200s** (pool `.3.100–.3.199`). Atur `default-lease-time`/`max-lease-time` per kelas. Tambah DNS
+`10.69.1.2,10.69.1.3` + `domain-search jujutsu.K11.com`.
 
 Script: `/root/05-dhcp-n3.sh` (`script/tengen/05-dhcp-n3.sh`), **dijalankan di `tengen`**.
 
 Konfigurasi N3 di `/etc/dhcp/dhcpd.conf`, **dijalankan di `tengen`**:
+
 ```sh
 cat /etc/dhcp/dhcpd.conf
 ```
 
 ![](./Attachments/image-28.webp)
+
 > **[Screenshot: konfigurasi N3 (short/long + domain-search) pada `tengen`]**
 
-Verifikasi lease time berdasarkan IP atau MAC (karena `udhcpc` klien Alpine tidak mengirim hostname ke `dhcpd.leases` secara default), **dijalankan di `tengen`**:
+Verifikasi lease time berdasarkan IP atau MAC (karena `udhcpc` klien Alpine tidak mengirim hostname
+ke `dhcpd.leases` secara default), **dijalankan di `tengen`**:
 
 ```sh
 # Cek selisih timestamp 'starts' dan 'ends'
@@ -359,6 +394,7 @@ cat /var/lib/dhcp/dhcpd.leases | grep -B 1 -A 8 '02:42:'
 ```
 
 ![](./Attachments/image-29.webp)
+
 > **[Screenshot: `dhcpd.leases` menunjukkan selisih `starts` ke `ends` 1800s / 43200s]**
 
 ---
@@ -378,6 +414,7 @@ service isc-dhcp-server restart; dhcpd -t
 ```
 
 ![](./Attachments/image-30.webp)
+
 > **[Screenshot: konfigurasi static lease `kugisaki` + validasi]**
 
 Cek alamat di klien `kugisaki`, **dijalankan di `kugisaki`**:
@@ -387,21 +424,29 @@ ip -br addr
 ```
 
 ![](./Attachments/image-31.webp)
+
 > **[Screenshot: `ip -br addr` `kugisaki` menunjukkan `10.69.3.99/24`]**
 
-**Catatan penting (sering bikin bingung).** isc-dhcp **tidak** menuliskan alamat dari deklarasi `host`/`fixed-address` ke `/var/lib/dhcp/dhcpd.leases`. File itu hanya mencatat lease yang dialokasikan **dinamis** (Pool 1/Pool 2/short/long). Karena itu `grep` kugisaki di `dhcpd.leases` memang **kosong**, ini perilaku benar, bukan kegagalan. Kugisaki tetap menerima `.3.99`.
+**Catatan penting (sering bikin bingung).** isc-dhcp **tidak** menuliskan alamat dari deklarasi
+`host`/`fixed-address` ke `/var/lib/dhcp/dhcpd.leases`. File itu hanya mencatat lease yang
+dialokasikan **dinamis** (Pool 1/Pool 2/short/long). Karena itu `grep` kugisaki di `dhcpd.leases`
+memang **kosong**, ini perilaku benar, bukan kegagalan. Kugisaki tetap menerima `.3.99`.
 
 Bukti penggantinya:
 
 **1) Di klien `kugisaki`**, alamat sesuai reservasi:
+
 ```sh
 ip -br addr show eth0        # -> 10.69.3.99/24
 ```
 
 ![](./Attachments/image-34.webp)
+
 > **[Screenshot: `ip -br addr` `kugisaki` = `10.69.3.99/24`]**
 
-**2) Di `tengen`**, server meng-ACK `.3.99` (memakai capture Soal 8). Jalankan capture di `tengen`, picu renew di `kugisaki`, lalu lihat `Your-IP`/`DHCPACK` untuk MAC kugisaki:
+**2) Di `tengen`**, server meng-ACK `.3.99` (memakai capture Soal 8). Jalankan capture di `tengen`,
+picu renew di `kugisaki`, lalu lihat `Your-IP`/`DHCPACK` untuk MAC kugisaki:
+
 ```sh
 # di tengen
 sh /root/08-capture-dora.sh 30
@@ -414,6 +459,7 @@ grep -A1 '02:42:69:c1:4e:00' /tmp/dora.txt | grep -E 'Your-IP|DHCP-Message'
 ![](./Attachments/image-35.webp)
 
 ![](./Attachments/image-36.webp)
+
 > **[Screenshot: `DHCPACK`/`Your-IP 10.69.3.99` untuk MAC `02:42:69:c1:4e:00`]**
 
 ---
@@ -424,32 +470,38 @@ grep -A1 '02:42:69:c1:4e:00' /tmp/dora.txt | grep -E 'Your-IP|DHCP-Message'
 `10.69.1.2,10.69.1.3`, domain-search sesuai. Cocokkan lease dengan `/var/lib/dhcp/dhcpd.leases` di
 `tengen`. Tidak ada tabrakan atau IP di luar kebijakan pool.
 
-Sisi klien, **dijalankan di tiap klien N2/N3** (`itadori`, `fushiguro`, `zenin`, `okkotsu`, `ino`, `kusakabe`, `miwa`, `kugisaki`): `script/common/07-verify-client.sh` (terpasang sebagai `/root/07-verify-client.sh`). Script menampilkan IP/mask/gateway/broadcast/DNS/domain-search, lalu menandai `[OK]`/`[!!]` apakah alamat klien berada di dalam kebijakan pool-nya. Parsing memakai `ip -4 addr show dev eth0` (tanpa flag `-o`/`-br`, karena BusyBox `ip` pada image client tidak mendukungnya).
+Sisi klien, **dijalankan di tiap klien N2/N3** (`itadori`, `fushiguro`, `zenin`, `okkotsu`, `ino`,
+`kusakabe`, `miwa`, `kugisaki`): `script/common/07-verify-client.sh` (terpasang sebagai
+`/root/07-verify-client.sh`). Script menampilkan IP/mask/gateway/broadcast/DNS/domain-search, lalu
+menandai `[OK]`/`[!!]` apakah alamat klien berada di dalam kebijakan pool-nya. Parsing memakai
+`ip -4 addr show dev eth0` (tanpa flag `-o`/`-br`, karena BusyBox `ip` pada image client tidak
+mendukungnya).
 
 ```sh
 sh /root/07-verify-client.sh
 ```
 
-![](./Attachments/image-39.webp)
-![](./Attachments/image-41.webp)
-![](./Attachments/image-42.webp)
-![](./Attachments/image-43.webp)
-![](./Attachments/image-44.webp)
-![](./Attachments/image-45.webp)
-![](./Attachments/image-46.webp)
-![](./Attachments/image-47.webp)
+![](./Attachments/image-39.webp) ![](./Attachments/image-41.webp) ![](./Attachments/image-42.webp)
+![](./Attachments/image-43.webp) ![](./Attachments/image-44.webp) ![](./Attachments/image-45.webp)
+![](./Attachments/image-46.webp) ![](./Attachments/image-47.webp)
+
 > **[Screenshot: IP/mask/gateway/broadcast/DNS/domain-search + hasil [OK] per klien Divisi A & B]**
 
-Sisi server, **dijalankan di `tengen`**: `script/tengen/07-verify-leases.sh` (`/root/07-verify-leases.sh`) merekap `/var/lib/dhcp/dhcpd.leases` dan mencocokkan tiap MAC klien dengan rentang pool/lease-nya.
+Sisi server, **dijalankan di `tengen`**: `script/tengen/07-verify-leases.sh`
+(`/root/07-verify-leases.sh`) merekap `/var/lib/dhcp/dhcpd.leases` dan mencocokkan tiap MAC klien
+dengan rentang pool/lease-nya.
 
 ```sh
 sh /root/07-verify-leases.sh
 ```
 
 ![](./Attachments/image-40.webp)
+
 > **[Screenshot: rekap lease aktif di `tengen` + hasil pencocokan kebijakan]**
 
-Catatan: `kugisaki` memperoleh `10.69.3.99` dari deklarasi `host` (fixed-address), namun isc-dhcp 4.4.3 tidak menuliskan lease untuk host statis ke `dhcpd.leases`, pembuktian kugisaki memakai IP di sisi klien + blok `host kugisaki` di `dhcpd.conf` (Soal 6).
+Catatan: `kugisaki` memperoleh `10.69.3.99` dari deklarasi `host` (fixed-address), namun isc-dhcp
+4.4.3 tidak menuliskan lease untuk host statis ke `dhcpd.leases`, pembuktian kugisaki memakai IP di
+sisi klien + blok `host kugisaki` di `dhcpd.conf` (Soal 6).
 
 ---
 
@@ -458,7 +510,10 @@ Catatan: `kugisaki` memperoleh `10.69.3.99` dari deklarasi `host` (fixed-address
 **Tujuan.** Buktikan urutan **DHCPDISCOVER → DHCPOFFER → DHCPREQUEST → DHCPACK** saat client minta
 lease baru. Tunjukkan `giaddr` sesuai interface `jichi` dari subnet client.
 
-Capture di `tengen` memakai script `script/tengen/08-capture-dora.sh` (`/root/08-capture-dora.sh`), **dijalankan di `tengen`**. Jalankan, lalu picu renew pada klien N2/N3 (**dijalankan di klien**, mis. `fushiguro`: `udhcpc -i eth0 -n -q`) selama jendela capture. Opsi `-U` wajib agar tcpdump langsung menulis ke file; tanpanya file kosong saat dibaca.
+Capture di `tengen` memakai script `script/tengen/08-capture-dora.sh` (`/root/08-capture-dora.sh`),
+**dijalankan di `tengen`**. Jalankan, lalu picu renew pada klien N2/N3 (**dijalankan di klien**,
+mis. `fushiguro`: `udhcpc -i eth0 -n -q`) selama jendela capture. Opsi `-U` wajib agar tcpdump
+langsung menulis ke file; tanpanya file kosong saat dibaca.
 
 ```sh
 # di tengen
@@ -467,11 +522,12 @@ Capture di `tengen` memakai script `script/tengen/08-capture-dora.sh` (`/root/08
 udhcpc -i eth0 -n -q
 ```
 
-![](./Attachments/image-48.webp)
-![](./Attachments/image-49.webp)
-> **[Screenshot: urutan Discover → Offer → Request → ACK + field `giaddr` = `10.69.2.1`/`10.69.3.1`]**
+![](./Attachments/image-48.webp) ![](./Attachments/image-49.webp)
 
-> **[Screenshot: tcpdump menunjukkan urutan DORA lengkap, field `giaddr` =
+> **[Screenshot: urutan Discover → Offer → Request → ACK + field `giaddr` =
+> `10.69.2.1`/`10.69.3.1`]**
+
+> **[Screenshot: tcpdump menunjukkan urutan DORA lengkap, field `giaddr` = >
 > `10.69.2.1`/`10.69.3.1`]**
 
 Identifikasi: server IP (`10.69.4.10`), IP yang diberikan (sesuai pool/reservasi), lease time,
@@ -493,8 +549,8 @@ service isc-dhcp-relay stop
 udhcpc -i eth0 -n -q      # -> 'no lease, failing'
 ```
 
-![](./Attachments/image-51.webp)
-![](./Attachments/image-50.webp)
+![](./Attachments/image-51.webp) ![](./Attachments/image-50.webp)
+
 > **[Screenshot: klien gagal memperoleh lease saat relay dihentikan]**
 
 ```sh
@@ -504,8 +560,8 @@ service isc-dhcp-relay start
 udhcpc -i eth0 -n -q
 ```
 
-![](./Attachments/image-52.webp)
-![](./Attachments/image-53.webp)
+![](./Attachments/image-52.webp) ![](./Attachments/image-53.webp)
+
 > **[Screenshot: klien memperoleh lease kembali setelah relay dihidupkan]**
 
 ---
@@ -515,56 +571,71 @@ udhcpc -i eth0 -n -q
 **Tujuan.** Autostart DHCP Server (`tengen`) dan DHCP Relay (`jichi`); restart kedua node;
 verifikasi semua kebijakan tetap berlaku.
 
-Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook, symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan lewat hook tersebut. Baris hook `jichi` ditulis `jichi/01-setup-routing.sh`, dan baris hook `tengen` ditulis `common/01-static-ip.sh`; script hook `/root/<node>.sh` sendiri dibuat saat menyiapkan node.
+Pada `tengen` dan `jichi` jalankan `script/common/10-autostart.sh` (`/root/10-autostart.sh`). Script
+membuktikan baris hook `up bash /root/<node>.sh` di `/etc/network/interfaces`, isi script hook,
+symlink rc, dan status service. Node `debinet` tidak memakai systemd, jadi autostart dijalankan
+lewat hook tersebut. Baris hook `jichi` ditulis `jichi/01-setup-routing.sh`, dan baris hook `tengen`
+ditulis `common/01-static-ip.sh`; script hook `/root/<node>.sh` sendiri dibuat saat menyiapkan node.
 
 ```sh
 sh /root/10-autostart.sh
 ```
 
-
 ![](./Attachments/image-55.webp)![](./Attachments/image-54.webp)
+
 > **[Screenshot: hook autostart + status service pada `tengen` dan `jichi`]**
 
 Restart kedua node (GNS3: stop lalu start). Setelah naik, verifikasi layanan:
+
 ```sh
 # di tengen
 pgrep -a dhcpd      # -> dhcpd running
 # di jichi
 ps -ef | grep dhcrelay              # -> dhcrelay di eth2/eth3/eth4
 ```
+
 ![](./Attachments/image-57.webp)
 
 ![](./Attachments/image-56.webp)
+
 > **[Screenshot: `dhcpd` & `dhcrelay` aktif lagi setelah restart]**
 
-Verifikasi akhir semua klien (Pool 1/Pool 2, short/long, fixed `.3.99`), **dijalankan di tiap klien** dengan `07-verify-client.sh`, dan lease, **dijalankan di `tengen`** dengan `07-verify-leases.sh`:
+Verifikasi akhir semua klien (Pool 1/Pool 2, short/long, fixed `.3.99`), **dijalankan di tiap
+klien** dengan `07-verify-client.sh`, dan lease, **dijalankan di `tengen`** dengan
+`07-verify-leases.sh`:
 
-![](./Attachments/image-58.webp)
-![](./Attachments/image-59.webp)
+![](./Attachments/image-58.webp) ![](./Attachments/image-59.webp)
+
 > **[Screenshot: verifikasi akhir Soal 10]**
 
 > **Catatan (persistensi antar-restart).** Setiap node menjalankan `/root/<node>.sh` saat boot
 > melalui baris `up bash /root/<node>.sh` di `/etc/network/interfaces` — `tengen.sh` menjalankan
 > `02`+`04`+`05`, `jichi.sh` menjalankan `01`+`03`. File `/root` tersimpan pada volume node sehingga
-> konfigurasi DHCP otomatis diterapkan ulang setiap restart. Script `/root` dan config `/etc`
-> bisa di-deploy ulang lewat console node bila perlu.
+> konfigurasi DHCP otomatis diterapkan ulang setiap restart. Script `/root` dan config `/etc` bisa
+> di-deploy ulang lewat console node bila perlu.
 
 ---
 
 ## Soal 11: DNS Master `utahime` & DNS Slave `shoko`
 
-**Tujuan.** Membangun sistem penamaan domain `jujutsu.K11.com` agar setiap pos tidak perlu menghafal IP mentah. `utahime` (`10.69.1.2`) menjadi **DNS Master** dan `shoko` (`10.69.1.3`) menjadi **DNS Slave** dengan BIND9. Zona berisi **SOA record**, **NS delegasi** untuk kedua server (`ns1` = utahime, `ns2` = shoko), dan **allow-transfer** dari master hanya ke slave. Saat nomor **serial** di master dinaikkan, file zona harus tersinkronisasi otomatis ke slave.
+**Tujuan.** Membangun sistem penamaan domain `jujutsu.K11.com` agar setiap pos tidak perlu menghafal
+IP mentah. `utahime` (`10.69.1.2`) menjadi **DNS Master** dan `shoko` (`10.69.1.3`) menjadi **DNS
+Slave** dengan BIND9. Zona berisi **SOA record**, **NS delegasi** untuk kedua server (`ns1` =
+utahime, `ns2` = shoko), dan **allow-transfer** dari master hanya ke slave. Saat nomor **serial** di
+master dinaikkan, file zona harus tersinkronisasi otomatis ke slave.
 
-**Skema.** Kedua node berada di Network 1 (DMZ) dan dijalankan sebagai container `debinet` (tanpa systemd), sehingga `named` dijalankan langsung (`nohup named -f`) alih-alih lewat `service`.
+**Skema.** Kedua node berada di Network 1 (DMZ) dan dijalankan sebagai container `debinet` (tanpa
+systemd), sehingga `named` dijalankan langsung (`nohup named -f`) alih-alih lewat `service`.
 
-| Host | IP | Peran | NS |
-|------|----|-------|----|
+| Host      | IP          | Peran      | NS                    |
+| --------- | ----------- | ---------- | --------------------- |
 | `utahime` | `10.69.1.2` | DNS Master | `ns1.jujutsu.K11.com` |
 | `shoko`   | `10.69.1.3` | DNS Slave  | `ns2.jujutsu.K11.com` |
 
 ### 11.1 Konfigurasi DNS Master (`utahime`)
 
-Script `/root/11-dns-master.sh` memasang `bind9`, menulis `named.conf.options`, `named.conf.local`, dan file zona, lalu menjalankan `named`. Bagian penting:
+Script `/root/11-dns-master.sh` memasang `bind9`, menulis `named.conf.options`, `named.conf.local`,
+dan file zona, lalu menjalankan `named`. Bagian penting:
 
 ```sh
 zone "jujutsu.K11.com" {
@@ -592,12 +663,14 @@ ns1     IN      A       10.69.1.2
 ns2     IN      A       10.69.1.3
 ```
 
-![](./Attachments/image-15.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20074947-start.png)
+
 > **[Screenshot: script `11-dns-master.sh` di `/root` + `named` berjalan pada `utahime`]**
 
 ### 11.2 Konfigurasi DNS Slave (`shoko`)
 
-Script `/root/11-dns-slave.sh` mendeklarasikan zona bertipe **slave** yang mengambil salinan dari master (file zona tidak dibuat manual):
+Script `/root/11-dns-slave.sh` mendeklarasikan zona bertipe **slave** yang mengambil salinan dari
+master (file zona tidak dibuat manual):
 
 ```sh
 zone "jujutsu.K11.com" {
@@ -608,12 +681,14 @@ zone "jujutsu.K11.com" {
 };
 ```
 
-![](./Attachments/image-16.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20075000.png)
+
 > **[Screenshot: script `11-dns-slave.sh` di `/root` + file zona hasil transfer di `shoko`]**
 
 ### 11.3 Verifikasi Query `dig` dari Client (`itadori`)
 
-Dari `itadori` (klien Network 2, DHCP `10.69.2.10/24`) dilakukan query ke **kedua** server. SOA dan NS dilayani oleh master maupun slave:
+Dari `itadori` (klien Network 2, DHCP `10.69.2.10/24`) dilakukan query ke **kedua** server. SOA dan
+NS dilayani oleh master maupun slave:
 
 ```sh
 dig @10.69.1.2 jujutsu.K11.com SOA +short   # dari master
@@ -621,12 +696,14 @@ dig @10.69.1.3 jujutsu.K11.com SOA +short   # dari slave
 dig @10.69.1.2 jujutsu.K11.com NS +short
 ```
 
-![](./Attachments/image-17.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20075035.png)
+
 > **[Screenshot: `dig` SOA & NS ke master dan slave dari `itadori`]**
 
 ### 11.4 Bukti Sinkronisasi Otomatis (Naikkan Serial)
 
-Serial dinaikkan di master (`./11-dns-master.sh bump`, serial `1` → `2`). Notify dikirim ke slave, dan zona tersinkronisasi otomatis, query ke **slave** pun menampilkan serial baru:
+Serial dinaikkan di master (`./11-dns-master.sh bump`, serial `1` → `2`). Notify dikirim ke slave,
+dan zona tersinkronisasi otomatis, query ke **slave** pun menampilkan serial baru:
 
 ```sh
 # di utahime
@@ -636,32 +713,28 @@ dig @10.69.1.3 jujutsu.K11.com SOA +short
 # -> ns1.jujutsu.K11.com. admin.jujutsu.K11.com. 2 604800 86400 2419200 604800
 ```
 
-![](./Attachments/image-18.webp)
-> **[Screenshot: serial slave ikut naik menjadi 2 setelah bump di master]**
-
-Sebagai bukti tambahan bahwa `allow-transfer` hanya berlaku untuk slave, transfer zona dari client **ditolak**:
-
-```sh
-dig @10.69.1.2 jujutsu.K11.com AXFR   # Transfer failed.
-```
-
 ---
 
 ## Soal 12: A Record, CNAME, Reverse DNS (PTR), dan DNS Forwarder
 
-**Tujuan.** Peta domain harus memetakan pintu masuk utama sekaligus tetap bisa mencari alamat di luar kawasan. Pada `utahime` ditambahkan **A record** `jujutsu.K11.com` yang mengarah ke `gojo`, **CNAME** `www` yang merujuk ke domain utama, **zona PTR** untuk melacak IP `gojo` kembali ke domain resminya, dan **DNS Forwarder** ke gateway internet `192.168.122.1`. Zona PTR ikut disinkronkan ke slave `shoko`.
+**Tujuan.** Peta domain harus memetakan pintu masuk utama sekaligus tetap bisa mencari alamat di
+luar kawasan. Pada `utahime` ditambahkan **A record** `jujutsu.K11.com` yang mengarah ke `gojo`,
+**CNAME** `www` yang merujuk ke domain utama, **zona PTR** untuk melacak IP `gojo` kembali ke domain
+resminya, dan **DNS Forwarder** ke gateway internet `192.168.122.1`. Zona PTR ikut disinkronkan ke
+slave `shoko`.
 
 **Ringkasan record yang ditambahkan:**
 
-| Nama | Tipe | Nilai |
-|------|------|-------|
-| `jujutsu.K11.com` | A | `10.69.1.4` (gojo) |
-| `www.jujutsu.K11.com` | CNAME | `jujutsu.K11.com.` |
-| `4.1.69.10.in-addr.arpa` | PTR | `jujutsu.K11.com.` |
+| Nama                     | Tipe  | Nilai              |
+| ------------------------ | ----- | ------------------ |
+| `jujutsu.K11.com`        | A     | `10.69.1.4` (gojo) |
+| `www.jujutsu.K11.com`    | CNAME | `jujutsu.K11.com.` |
+| `4.1.69.10.in-addr.arpa` | PTR   | `jujutsu.K11.com.` |
 
 ### 12.1 Konfigurasi Master (`utahime`)
 
-Script `/root/12-domain-ptr-forwarder.sh` menulis ulang zona forward dan menambah zona reverse, lalu mengaktifkan forwarder:
+Script `/root/12-domain-ptr-forwarder.sh` menulis ulang zona forward dan menambah zona reverse, lalu
+mengaktifkan forwarder:
 
 ```sh
 options {
@@ -687,12 +760,14 @@ Zona reverse `1.69.10.in-addr.arpa`:
 4       IN      PTR     jujutsu.K11.com.  ; 10.69.1.4 -> jujutsu.K11.com
 ```
 
-![](./Attachments/image-19.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20082604.png)
+
 > **[Screenshot: zona forward + PTR + forwarder pada `utahime`]**
 
 ### 12.2 Zona PTR pada Slave (`shoko`)
 
-`shoko` mendeklarasikan **dua** zona slave (forward + reverse) sehingga keduanya ikut tersinkron otomatis dari master:
+`shoko` mendeklarasikan **dua** zona slave (forward + reverse) sehingga keduanya ikut tersinkron
+otomatis dari master:
 
 ```sh
 zone "1.69.10.in-addr.arpa" {
@@ -703,7 +778,8 @@ zone "1.69.10.in-addr.arpa" {
 };
 ```
 
-![](./Attachments/image-20.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20082613.png)
+
 > **[Screenshot: file zona hasil transfer (`db.jujutsu.K11.com` dan `db.1.69.10`) di `shoko`]**
 
 ### 12.3 Verifikasi dari Client (`itadori`)
@@ -717,16 +793,20 @@ dig @10.69.1.2 -x 10.69.1.4 +short               # -> jujutsu.K11.com.
 dig @10.69.1.2 google.com A +short               # -> (via forwarder)
 ```
 
-Hasil: A record mengarah ke `10.69.1.4` baik di master maupun slave, `www` menunjuk `jujutsu.K11.com.` lalu resolve ke `10.69.1.4`, dan PTR `10.69.1.4` mengembalikan `jujutsu.K11.com.`.
+Hasil: A record mengarah ke `10.69.1.4` baik di master maupun slave, `www` menunjuk
+`jujutsu.K11.com.` lalu resolve ke `10.69.1.4`, dan PTR `10.69.1.4` mengembalikan
+`jujutsu.K11.com.`.
 
-Client juga tetap dapat menjangkau alamat di luar kawasan: resolusi `google.com` diteruskan forwarder ke `192.168.122.1`, dan ping berhasil.
+Client juga tetap dapat menjangkau alamat di luar kawasan: resolusi `google.com` diteruskan
+forwarder ke `192.168.122.1`, dan ping berhasil.
 
 ```sh
 ping -c 3 google.com
 # 3 packets transmitted, 3 received, 0% packet loss
 ```
 
-![](./Attachments/image-21.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20082620.png)
+
 > **[Screenshot: `dig` A/CNAME/PTR dan `ping google.com` dari `itadori`]**
 
 ---
@@ -742,10 +822,10 @@ remote diberikan ke seluruh node Network 4.
 **Skema.** Kedua node di Network 4 dan dijalankan sebagai container `debinet` (Debian 13 trixie,
 tanpa systemd) sehingga `mariadbd` dijalankan langsung, bukan lewat `service`.
 
-| Host | IP | Peran | server-id |
-|------|----|-------|-----------|
-| `yaga`    | `10.69.4.8` | DB-Master | 1 |
-| `inumaki` | `10.69.4.9` | DB-Slave  | 2 |
+| Host      | IP          | Peran     | server-id |
+| --------- | ----------- | --------- | --------- |
+| `yaga`    | `10.69.4.8` | DB-Master | 1         |
+| `inumaki` | `10.69.4.9` | DB-Slave  | 2         |
 
 ### 13.1 Konfigurasi DB-Master (`yaga`)
 
@@ -774,14 +854,15 @@ GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'10.69.4.9';
 GRANT ALL PRIVILEGES ON db_shibuya_K11.* TO 'k11'@'10.69.4.%';   -- seluruh node Network 4
 ```
 
-![](./Attachments/image-23.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20103754.png)
 
 > **[Screenshot: `SHOW MASTER STATUS`, `SHOW TABLES`, dan daftar user grant pada `yaga`]**
 
 ### 13.2 Konfigurasi DB-Slave (`inumaki`)
 
 Script `/root/13-db-slave.sh` melakukan seed awal `mysqldump --master-data=2` dari master (skema +
-data) sekaligus mengambil **koordinat binlog** dari header dump, lalu menjalankan `CHANGE MASTER TO`:
+data) sekaligus mengambil **koordinat binlog** dari header dump, lalu menjalankan
+`CHANGE MASTER TO`:
 
 ```sh
 CHANGE MASTER TO
@@ -793,9 +874,10 @@ CHANGE MASTER TO
 START SLAVE;
 ```
 
-![](./Attachments/image-24.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20103745.png)
 
-> **[Screenshot: `SHOW SLAVE STATUS` pada `inumaki` — `Slave_IO_Running`/`Slave_SQL_Running` = Yes]**
+> **[Screenshot: `SHOW SLAVE STATUS` pada `inumaki` — `Slave_IO_Running`/`Slave_SQL_Running` =
+> Yes]**
 
 ### 13.3 Bukti Replikasi dari Client (`kirara`)
 
@@ -811,16 +893,9 @@ mariadb -h 10.69.4.9 -u k11 -pk11pass db_shibuya_K11 \
 Hasil: baris yang dimasukkan ke master (`jumlah_di_master`) **tersalin ke slave**
 (`jumlah_di_slave`), dan `LAST_ERROR` kosong.
 
-![](./Attachments/image-25.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20104058.png)
 
 > **[Screenshot: `./13-test-replikasi.sh` di `kirara` — marker muncul di master & slave]**
-
-> **Catatan (kendala jaringan lab).** Sebagian node gagal `apt` karena DNS mengembalikan alamat
-> **AAAA** (IPv6) sementara lab hanya punya rute IPv4, plus koneksi lambat. Solusinya script
-> menambahkan `/etc/apt/apt.conf.d/99force-ipv4` (`Acquire::ForceIPv4 "true";`),
-> `99noninteractive` (`Dpkg::Options { "--force-confdef"; "--force-confold"; }` untuk menghindari
-> prompt conf-file), `Acquire::Retries`, dan loop install `--fix-missing`. Script juga tidak
-> menyembunyikan error (`2>/dev/null`) saat memasang client agar kegagalan terlihat jelas.
 
 ---
 
@@ -887,9 +962,7 @@ server {
 }
 ```
 
-![](./Attachments/image-31.webp)
-
-> **[Screenshot: `cat /etc/nginx/sites-available/worker.conf` pada `maki` — tampak `allow 10.69.1.4; deny all;`]**
+![](./Attachments/phase2/Screenshot%202026-10-15%20113405.png)
 
 ### 14.3 Worker API (`nanami`, `todo`, `kirara`)
 
@@ -929,9 +1002,9 @@ server {
 }
 ```
 
-![](./Attachments/image-32.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20173146.png)
 
-> **[Screenshot: `cat /etc/nginx/sites-available/api.conf` pada `nanami` — tampak `allow 10.69.4.2; deny all;` dan `root`]**
+![](./Attachments/phase2/Screenshot%202026-10-15%20173157.png)
 
 ### 14.4 Bukti: akses langsung ditolak, lewat proxy diterima
 
@@ -951,24 +1024,14 @@ curl -o /dev/null -w "%{http_code}\n" -H "Host: jujutsu.K11.com" http://10.69.4.
 
 Hasil pengujian:
 
-| Pengakses | Tujuan | Hasil |
-|-----------|--------|-------|
-| klien langsung | worker web `10.69.4.3` | **403 Forbidden** |
-| klien langsung | worker API `10.69.4.5` | **403 Forbidden** |
-| `gojo` (`10.69.1.4`) | worker web `10.69.4.3` | **200 OK** |
-| `geto` (`10.69.4.2`) | worker API `10.69.4.5` | **200 OK** |
+| Pengakses            | Tujuan                 | Hasil             |
+| -------------------- | ---------------------- | ----------------- |
+| klien langsung       | worker web `10.69.4.3` | **403 Forbidden** |
+| klien langsung       | worker API `10.69.4.5` | **403 Forbidden** |
+| `gojo` (`10.69.1.4`) | worker web `10.69.4.3` | **200 OK**        |
+| `geto` (`10.69.4.2`) | worker API `10.69.4.5` | **200 OK**        |
 
-![](./Attachments/image-33.webp)
-
-> **[Screenshot: hasil `14-test-access.sh` — akses langsung 403, akses via gojo/geto 200]**
-
-> **Catatan demonstrasi.** Saat uji dari dalam worker sendiri (`curl 127.0.0.1`), hasilnya juga
-> **403** — dan itu **benar**, karena `127.0.0.1` bukan gojo/geto. Jadi jangan terkecoh: bukti yang
-> menentukan adalah request dari IP gojo/geto yang menghasilkan **200**.
-
-> **Kendala yang ditemukan & diperbaiki.** Vhost API awalnya **lupa `root /var/www/html;`**,
-> sehingga Nginx mencari `index.php` di root default dan membalas **404** ketika diakses lewat
-> load balancer. Setelah `root` ditambahkan, endpoint API diakses normal (200).
+![](./Attachments/phase2/Screenshot%202026-10-15%20173027.png)
 
 ---
 
@@ -999,12 +1062,13 @@ server {
 }
 ```
 
-Cara kerja **Weighted Round Robin**: Nginx mengulang pola distribusi sesuai bobot. Dengan bobot
-3:1, dalam setiap 4 request nanami menerima 3 dan todo menerima 1.
+Cara kerja **Weighted Round Robin**: Nginx mengulang pola distribusi sesuai bobot. Dengan bobot 3:1,
+dalam setiap 4 request nanami menerima 3 dan todo menerima 1.
 
-![](./Attachments/image-34.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20113425.png)
 
-> **[Screenshot: `cat /etc/nginx/sites-available/api-lb.conf` pada `geto` — tampak `weight=3`, `weight=1`, dan `backup`]**
+> **[Screenshot: `cat /etc/nginx/sites-available/api-lb.conf` pada `geto` — tampak `weight=3`,
+> `weight=1`, dan `backup`]**
 
 ### 15.2 Bukti distribusi beban
 
@@ -1019,31 +1083,25 @@ done
 
 Hasil (12 request):
 
-| Worker | Jumlah |
-|--------|--------|
-| `nanami` | 8 |
-| `todo` | 3 |
-| `kirara` (backup) | 0 |
+| Worker            | Jumlah |
+| ----------------- | ------ |
+| `nanami`          | 8      |
+| `todo`            | 3      |
+| `kirara` (backup) | 0      |
 
-Rasio nanami : todo = **8 : 3 ≈ 2,7 : 1** — mendekati bobot **3:1**. `kirara` (backup) belum
-dipakai karena kedua server utama masih hidup.
+Rasio nanami : todo = **8 : 3 ≈ 2,7 : 1** — mendekati bobot **3:1**. `kirara` (backup) belum dipakai
+karena kedua server utama masih hidup.
 
-![](./Attachments/image-35.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20113806.png)
 
 > **[Screenshot: output `15-test-lb.sh` di `geto` — hitungan nanami > todo, kirara 0]**
-
-> **Catatan.** Jumlah per worker tidak selalu persis kelipatan 3 karena Nginx memakai **smoothed
-> weighted round robin** (mendistribusikan secara halus, bukan blok-blok kaku). Yang penting
-> terbukti: **nanami selalu menerima porsi lebih besar** daripada todo. Beberapa request sempat
-> tampak kosong saat pengujian karena `curl` timeout (INSERT ke `yaga` lewat jaringan lambat);
-> setelah `--max-time` dinaikkan, semua request terlayani.
 
 ---
 
 ## Soal 16 — Path-Based Routing `gojo`
 
-**Tujuan.** `gojo` (`10.69.1.4`) menjadi gerbang publik tunggal untuk domain `jujutsu.K11.com`
-(+ `www`). Request root (`/`) diteruskan **Round Robin** ke worker frontend (`maki`, `panda`),
+**Tujuan.** `gojo` (`10.69.1.4`) menjadi gerbang publik tunggal untuk domain `jujutsu.K11.com` (+
+`www`). Request root (`/`) diteruskan **Round Robin** ke worker frontend (`maki`, `panda`),
 sedangkan request ke path `/api` diteruskan ke `geto`.
 
 **Prasyarat.** `gojo` berada di **Network 1**, sedangkan worker berada di **Network 4**. Aturan
@@ -1070,14 +1128,14 @@ server {
 }
 ```
 
-![](./Attachments/image-36.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20173544.png)
 
 > **[Screenshot: `cat /etc/nginx/sites-available/reverse-proxy.conf` pada `gojo`]**
 
 ### 16.2 Bukti dari client (`kusakabe`)
 
-Dari `kusakabe` (`10.69.3.10`), 6 request ke `/` dilayani bergantian oleh maki & panda, dan
-request `/api` diteruskan ke worker API lewat geto:
+Dari `kusakabe` (`10.69.3.10`), 6 request ke `/` dilayani bergantian oleh maki & panda, dan request
+`/api` diteruskan ke worker API lewat geto:
 
 ```
 == 1) Path '/' -> worker frontend (Round Robin maki/panda) ==
@@ -1095,7 +1153,7 @@ request `/api` diteruskan ke worker API lewat geto:
   request 4 -> worker=nanami
 ```
 
-![](./Attachments/image-37.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20173635.png)
 
 > **[Screenshot: output `16-test-routing.sh` di `kusakabe`]**
 
@@ -1108,8 +1166,8 @@ request `/api` diteruskan ke worker API lewat geto:
 skrip API menyimpan IP klien yang telah diverifikasi ke kolom **`client_ip`** pada tabel
 `request_logs` di `yaga`.
 
-Script: `script/gojo/16-reverse-proxy.sh` (kirim header), `script/geto/17-trusted-proxy.sh`
-(percaya hanya gojo), `script/itadori/17-test-clientip.sh` (uji).
+Script: `script/gojo/16-reverse-proxy.sh` (kirim header), `script/geto/17-trusted-proxy.sh` (percaya
+hanya gojo), `script/itadori/17-test-clientip.sh` (uji).
 
 ### 17.1 Konfigurasi `geto`
 
@@ -1132,9 +1190,7 @@ server {
 Dengan ini `$remote_addr` di `geto` menjadi IP **klien asli** (bukan IP gojo), lalu diteruskan
 kembali ke worker API sebagai `X-Real-IP`.
 
-![](./Attachments/image-38.webp)
-
-> **[Screenshot: `cat /etc/nginx/sites-available/api-lb.conf` pada `geto` — tampak `set_real_ip_from`]**
+![](./Attachments/phase2/Screenshot%202026-10-15%20173810.png)
 
 ### 17.2 Bukti dari client (`itadori`)
 
@@ -1146,14 +1202,14 @@ respons: {"worker":"nanami","service":"api","method":"GET","path":"/api/test",
           "client_ip":"10.69.2.10","logged":true,"error":""}
 ```
 
-| Nilai | Keterangan |
-|-------|------------|
-| `client_ip` = `10.69.2.10` | ✅ IP klien asli (`itadori`) |
-| bukan `10.69.1.4` | gojo (proxy) |
-| bukan `10.69.4.2` | geto (load balancer) |
-| `logged: true` | ✅ berhasil tersimpan ke `request_logs` di `yaga` |
+| Nilai                      | Keterangan                                        |
+| -------------------------- | ------------------------------------------------- |
+| `client_ip` = `10.69.2.10` | ✅ IP klien asli (`itadori`)                      |
+| bukan `10.69.1.4`          | gojo (proxy)                                      |
+| bukan `10.69.4.2`          | geto (load balancer)                              |
+| `logged: true`             | ✅ berhasil tersimpan ke `request_logs` di `yaga` |
 
-![](./Attachments/image-39.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20174610.png)
 
 > **[Screenshot: output `17-test-clientip.sh` di `itadori` — `client_ip` = 10.69.2.10]**
 
@@ -1162,12 +1218,12 @@ respons: {"worker":"nanami","service":"api","method":"GET","path":"/api/test",
 ## Soal 18 — Backup Server & Passive Health Check
 
 **Tujuan.** `nanami` dan `todo` adalah worker API utama, sedangkan `kirara` disiapkan sebagai
-**worker cadangan**. Upstream `api_cluster` pada `geto` dikonfigurasi agar `kirara` menjadi
-**backup server**, dengan **passive health check** `max_fails=2` dan `fail_timeout=5s`. Saat
-worker utama dihentikan, request harus dialihkan ke `kirara` **tanpa error 502**.
+**worker cadangan**. Upstream `api_cluster` pada `geto` dikonfigurasi agar `kirara` menjadi **backup
+server**, dengan **passive health check** `max_fails=2` dan `fail_timeout=5s`. Saat worker utama
+dihentikan, request harus dialihkan ke `kirara` **tanpa error 502**.
 
-Script: `script/geto/18-test-failover.sh` (geto), `script/common/18-worker-ctl.sh`
-(nanami/todo untuk stop-start).
+Script: `script/geto/18-test-failover.sh` (geto), `script/common/18-worker-ctl.sh` (nanami/todo
+untuk stop-start).
 
 ### 18.1 Konfigurasi upstream
 
@@ -1182,42 +1238,48 @@ upstream api_cluster {
 ### 18.2 Bukti tiga fase
 
 **Fase 1 — kondisi normal** (nanami + todo hidup):
+
 ```
 worker : nanami=9  todo=3  kirara=0
 HTTP   : 200=12
 ```
+
 Distribusi weighted 3:1 tepat; backup tidak dipakai.
 
 **Fase 2 — failover** (nanami + todo dimatikan):
+
 ```
 worker : nanami=0  todo=0  kirara=12
 HTTP   : 200=12
 [OK] TIDAK ADA 502 -> backup kirara menangani request
 ```
+
 Seluruh request dialihkan ke `kirara`, semua 200, **nol 502**.
 
 **Fase 3 — pemulihan** (nanami + todo dihidupkan):
+
 ```
 worker : nanami=8  todo=4  kirara=0
 HTTP   : 200=12
 ```
+
 Trafik kembali normal ke server utama.
 
-![](./Attachments/image-40.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20174913.png)
+
+![](./Attachments/phase2/Screenshot%202026-10-15%20174931.png)
+
+![](./Attachments/phase2/Screenshot%202026-10-15%20174944.png)
 
 > **[Screenshot: output `18-test-failover.sh` (normal → failover → normal) di `geto`]**
-
-> **Catatan.** Script mengirim **warmup** beberapa request sebelum pengukuran, karena passive
-> health check bersifat reaktif — Nginx baru menandai server mati setelah `max_fails=2` kegagalan
-> terdeteksi.
 
 ---
 
 ## Soal 19 — Proxy Caching & Rate Limiting `gojo`
 
-**Tujuan.** `gojo` mengoptimalkan layanan web sekaligus membatasi request berlebihan:
-**proxy caching** halaman web dengan masa berlaku **10 menit** + header **`X-Cache-Status`**, dan
-**rate limiting** pada path `/api` dengan batas **10 request/detik per IP** klien.
+**Tujuan.** `gojo` mengoptimalkan layanan web sekaligus membatasi request berlebihan: **proxy
+caching** halaman web dengan masa berlaku **10 menit** + header **`X-Cache-Status`**, dan **rate
+limiting** pada path `/api` dengan batas **10 request/detik per IP** klien.
 
 Script: `script/gojo/19-cache-ratelimit.sh` (gojo), `script/kusakabe/19-test-cache-ratelimit.sh`
 (uji).
@@ -1243,9 +1305,7 @@ location /api {
 }
 ```
 
-![](./Attachments/image-41.webp)
-
-> **[Screenshot: `cat /etc/nginx/conf.d/19-cache-ratelimit.conf` pada `gojo`]**
+![](./Attachments/phase2/Screenshot%202026-10-15%20175729.png)
 
 ### 19.2 Bukti proxy cache (MISS → HIT)
 
@@ -1257,7 +1317,7 @@ request 4 -> X-Cache-Status: HIT
 request 5 -> X-Cache-Status: HIT
 ```
 
-![](./Attachments/image-42.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20175719.png)
 
 > **[Screenshot: output bagian cache `19-test-cache-ratelimit.sh` di `kusakabe`]**
 
@@ -1272,14 +1332,6 @@ $ seq 1 30 | xargs -P 30 -I{} curl -s -o /dev/null -w "%{http_code}\n" \
      24 429
 ```
 
-![](./Attachments/image-43.webp)
-
-> **[Screenshot: distribusi 200 vs 429 di `kusakabe`]**
-
-> **Catatan.** Pengujian sekuensial (satu request per waktu) **tidak** memicu 429 karena jarak
-> antar request melebihi 100 ms (di bawah 10 r/s). Rate limiting baru terlihat saat request
-> dikirim **paralel/serempet**.
-
 ---
 
 ## Soal 20 — Benchmark Kapasitas Layanan
@@ -1289,8 +1341,8 @@ $ seq 1 30 | xargs -P 30 -I{} curl -s -o /dev/null -w "%{http_code}\n" \
 untuk melihat efek rate limiting, lalu gunakan **access log `gojo`** untuk membedakan kegagalan
 aplikasi, koneksi, dan penolakan rate limit.
 
-Script: `script/kusakabe/20-benchmark.sh` (benchmark), `script/gojo/20-log-analysis.sh`
-(analisis log).
+Script: `script/kusakabe/20-benchmark.sh` (benchmark), `script/gojo/20-log-analysis.sh` (analisis
+log).
 
 ### 20.1 Benchmark halaman web (baseline, cache aktif)
 
@@ -1303,13 +1355,13 @@ Time per request:       4.633 [ms] (mean)
 Transfer rate:          2326.92 [Kbytes/sec] received
 ```
 
-| Metrik | Nilai |
-|--------|-------|
-| Requests per Second (RPS) | **±6475** (3× run: 6475 / 6397 / 6637) |
-| Time per request (latensi) | **4.633 ms** |
-| Failed requests | **0** |
+| Metrik                     | Nilai                                  |
+| -------------------------- | -------------------------------------- |
+| Requests per Second (RPS)  | **±6475** (3× run: 6475 / 6397 / 6637) |
+| Time per request (latensi) | **4.633 ms**                           |
+| Failed requests            | **0**                                  |
 
-![](./Attachments/image-44.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20181159-end.png)
 
 > **[Screenshot: `ab -n 600 -c 30` di `kusakabe`]**
 
@@ -1325,12 +1377,12 @@ Requests per second:    3994.33 [#/sec] (mean)
 
 Perbandingan baseline vs rate limit:
 
-| Target | Failed requests | Non-2xx (429) |
-|--------|-----------------|----------------|
-| `/` (halaman web) | 0 | 0 |
-| `/api` (rate limited) | 195 | **194** |
+| Target                | Failed requests | Non-2xx (429) |
+| --------------------- | --------------- | ------------- |
+| `/` (halaman web)     | 0               | 0             |
+| `/api` (rate limited) | 195             | **194**       |
 
-![](./Attachments/image-45.webp)
+![](./Attachments/phase2/Screenshot%202026-10-15%20181159-end.png)
 
 > **[Screenshot: `ab -n 200 -c 20 .../api/test` di `kusakabe`]**
 
@@ -1360,16 +1412,11 @@ Contoh baris log request yang ditolak:
 
 **Pemisahan jenis hasil request:**
 
-| Jenis | Penanda di log | Jumlah |
-|-------|----------------|--------|
-| Sukses | `200` | 2443 |
-| Ditolak kebijakan rate limit | `429` + `limit=REJECTED` | 412 |
-| Kegagalan aplikasi (5xx) | — | 0 |
-| Kegagalan koneksi (502/504) | — | 0 |
+| Jenis                        | Penanda di log           | Jumlah |
+| ---------------------------- | ------------------------ | ------ |
+| Sukses                       | `200`                    | 2443   |
+| Ditolak kebijakan rate limit | `429` + `limit=REJECTED` | 412    |
+| Kegagalan aplikasi (5xx)     | —                        | 0      |
+| Kegagalan koneksi (502/504)  | —                        | 0      |
 
 Cache juga terkonfirmasi di skala produksi: **2403 `HIT`** vs hanya **2 `MISS`** (akses pertama).
-
-![](./Attachments/image-46.webp)
-
-> **[Screenshot: output `20-log-analysis.sh` di `gojo`]**
-
